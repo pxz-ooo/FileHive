@@ -1,0 +1,190 @@
+<t-navbar title="消息详情" background="#f6f1e8" color="#16302b" fixed="{{true}}" bind:left-click="goBack" left-arrow="{{true}}" />
+
+<view class="page-shell" wx:if="{{msg}}">
+  <view class="hero-card">
+    <view class="hero-orb hero-orb-a"></view>
+    <view class="hero-orb hero-orb-b"></view>
+
+    <view class="hero-top">
+      <view>
+        <view class="hero-kicker">MESSAGE DECISION VIEW</view>
+        <view class="hero-status hero-status-{{statusTone}}">{{statusLabel}}</view>
+      </view>
+      <view class="hero-type">{{typeLabel}}</view>
+    </view>
+
+    <view class="hero-title">{{summaryText}}</view>
+    <view class="hero-subtitle">{{statusHint}}</view>
+
+    <view class="hero-tags">
+      <view class="hero-pill hero-pill-primary">{{analysis ? analysis.category : '待分析'}}</view>
+      <view class="hero-pill" wx:if="{{projectName}}" style="color: {{projectColor}}; border-color: {{projectColor}};">{{projectName}}</view>
+      <view class="hero-pill" wx:if="{{platformInfo.show}}">{{platformInfo.name}}</view>
+    </view>
+  </view>
+
+  <view class="panel">
+    <view class="section-head">
+      <view>
+        <view class="section-title">快速判断</view>
+        <view class="section-tip">先看这条消息现在处于什么状态，再决定下一步操作。</view>
+      </view>
+      <view class="section-action" bindtap="copySummary">复制摘要</view>
+    </view>
+
+    <view class="snapshot-grid">
+      <view class="snapshot-card" wx:for="{{snapshotCards}}" wx:key="label">
+        <view class="snapshot-label">{{item.label}}</view>
+        <view class="snapshot-value">{{item.value}}</view>
+        <view class="snapshot-helper">{{item.helper}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="panel" wx:if="{{platformInfo.show}}">
+    <view class="section-head">
+      <view>
+        <view class="section-title">链接来源</view>
+        <view class="section-tip">优先保留平台、标题、短链和来源文案，方便后续继续补抓内容。</view>
+      </view>
+      <view class="section-action" data-value="{{platformInfo.url || platformInfo.originalUrl}}" bindtap="copyValue">复制链接</view>
+    </view>
+
+    <view class="platform-card">
+      <view class="platform-name">{{platformInfo.name}}</view>
+      <view class="platform-mode">{{platformInfo.sourceMode}}</view>
+      <view class="platform-status">{{platformInfo.statusText}}</view>
+    </view>
+  </view>
+
+  <view class="panel" wx:for="{{contentSections}}" wx:key="title">
+    <view class="section-head">
+      <view>
+        <view class="section-title">{{item.title}}</view>
+        <view class="section-tip">{{item.tip}}</view>
+      </view>
+    </view>
+
+    <view class="content-list">
+      <view class="content-card" wx:for="{{item.items}}" wx:key="label">
+        <view class="content-card-top">
+          <view class="content-label">{{item.label}}</view>
+          <view class="content-copy" wx:if="{{item.copyable}}" data-value="{{item.value}}" bindtap="copyValue">复制</view>
+        </view>
+        <view class="content-value">{{item.value}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="panel">
+    <view class="section-head">
+      <view>
+        <view class="section-title">归档管理</view>
+        <view class="section-tip">补摘要、归项目和查看基础元信息都集中在这里。</view>
+      </view>
+    </view>
+
+    <view class="meta-grid">
+      <view class="meta-card meta-card-action" bindtap="editDesc">
+        <text class="meta-label">摘要描述</text>
+        <text class="meta-value">{{analysis && (analysis.summary || analysis.desc) ? (analysis.summary || analysis.desc) : '点击补充摘要'}}</text>
+      </view>
+      <view class="meta-card meta-card-action" bindtap="openProjectSheet">
+        <text class="meta-label">所属项目</text>
+        <text class="meta-value">{{projectName || '未归档'}}</text>
+      </view>
+      <view class="meta-card">
+        <text class="meta-label">消息时间</text>
+        <text class="meta-value">{{displayTime}}</text>
+      </view>
+      <view class="meta-card">
+        <text class="meta-label">分析模型</text>
+        <text class="meta-value">{{modelText}}</text>
+      </view>
+    </view>
+
+    <view class="tag-row" wx:if="{{tags.length}}">
+      <view class="tag-chip" wx:for="{{tags}}" wx:key="*this">{{item}}</view>
+    </view>
+  </view>
+
+  <view class="panel" wx:if="{{actionHints.length}}">
+    <view class="section-head">
+      <view>
+        <view class="section-title">建议动作</view>
+        <view class="section-tip">详情页不只是看内容，更重要的是决定如何处理它。</view>
+      </view>
+      <view class="section-action" bindtap="copyStructuredContent">复制整理结果</view>
+    </view>
+
+    <view class="hint-list">
+      <view class="hint-item" wx:for="{{actionHints}}" wx:key="*this">
+        <view class="hint-dot"></view>
+        <view class="hint-text">{{item}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="panel">
+    <view class="section-head">
+      <view>
+        <view class="section-title">开发数据</view>
+        <view class="section-tip">保留底层 JSON，方便排查抓取、分类和导入链路。</view>
+      </view>
+      <view class="section-action" bindtap="toggleRaw">{{rawExpanded ? '收起' : '展开'}}</view>
+    </view>
+
+    <view class="raw-block" wx:if="{{rawExpanded}}">{{rawJson}}</view>
+  </view>
+
+  <view class="action-spacer"></view>
+
+  <view class="sticky-action-bar">
+    <view class="sticky-primary" bindtap="openProjectSheet">归档到项目</view>
+    <view class="sticky-secondary-row">
+      <view class="sticky-chip" bindtap="editDesc">改摘要</view>
+      <view class="sticky-chip" bindtap="reanalyze">重分析</view>
+      <view class="sticky-chip sticky-chip-danger" bindtap="deleteMsg">删除</view>
+    </view>
+  </view>
+</view>
+
+<view wx:elif="{{error}}" class="error-wrap">
+  <image class="state-illustration" src="/images/illustrations/detail-state.svg" mode="aspectFit" />
+  <view class="error-title">加载失败</view>
+  <view class="error-text">{{error}}</view>
+</view>
+
+<view wx:else class="loading-wrap">
+  <image class="state-illustration state-illustration-loading" src="/images/illustrations/detail-state.svg" mode="aspectFit" />
+  <t-loading size="32" />
+</view>
+
+<t-popup visible="{{showProjectSheet}}" placement="bottom" bind:visible-change="onProjectSheetClose">
+  <view class="sheet-panel">
+    <view class="sheet-head">
+      <view>
+        <view class="sheet-title">选择归档项目</view>
+        <view class="sheet-subtitle">把这条消息放进合适的项目里，后续整理会更清晰。</view>
+      </view>
+      <text class="sheet-close" bindtap="closeProjectSheet">×</text>
+    </view>
+
+    <view class="sheet-item {{!msg.message.project_id ? 'active' : ''}}" bindtap="removeProject">
+      <text>未归档</text>
+      <text class="sheet-item-count">默认</text>
+    </view>
+
+    <view class="sheet-item {{msg.message.project_id === item.id ? 'active' : ''}}" wx:for="{{projects}}" wx:key="id" data-pid="{{item.id}}" bindtap="selectProject">
+      <text>{{item.name}}</text>
+      <text class="sheet-item-count">{{item.msg_count}} 条</text>
+    </view>
+  </view>
+</t-popup>
+
+<t-dialog visible="{{showEditDialog}}" bind:confirm="saveDesc" bind:cancel="cancelEdit" confirm-btn="保存" cancel-btn="取消">
+  <view slot="body" class="dialog-body">
+    <view class="dialog-title">补充或修正摘要</view>
+    <textarea class="dialog-textarea" value="{{editText}}" bindinput="onEditInput" placeholder="用一句话写清这条消息的核心信息..." maxlength="120"></textarea>
+  </view>
+</t-dialog>

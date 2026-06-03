@@ -1,0 +1,225 @@
+﻿<t-navbar title="微信整理助手" background="#f6f1e8" color="#16302b" fixed="{{true}}">
+  <view slot="right">
+    <view class="nav-actions">
+      <view class="nav-chip" bindtap="openProjectPanel">
+        <image class="nav-chip-icon" src="/images/icons/folder.svg" />
+        <text>项目</text>
+      </view>
+    </view>
+  </view>
+</t-navbar>
+
+<view class="page-shell">
+  <view class="hero-card">
+    <view class="hero-orb hero-orb-a"></view>
+    <view class="hero-orb hero-orb-b"></view>
+    <view class="hero-kicker">WECHAT ORGANIZER</view>
+    <view class="hero-title">随手存 · 自动归 · 随时找</view>
+    <view class="hero-subtitle">{{insightDescription}}</view>
+
+    <view class="home-search">
+      <image class="home-search-icon" src="/images/icons/search.svg" />
+      <input
+        class="home-search-input"
+        placeholder="搜索消息、摘要、项目或分类"
+        value="{{searchKeyword}}"
+        bindinput="onSearchInput"
+        confirm-type="search"
+        bindconfirm="submitSearch"
+      />
+      <view class="home-search-action" bindtap="submitSearch">搜索</view>
+    </view>
+
+    <view class="hero-utility" bindtap="goSettings">
+      <view class="hero-utility-title">本地设置</view>
+      <view class="hero-utility-value">配置 API Key、查看导出与存储状态</view>
+    </view>
+
+    <view class="stats-grid">
+      <view class="stat-card">
+        <text class="stat-value">{{overview ? overview.today_messages : 0}}</text>
+        <text class="stat-label">今日新增</text>
+      </view>
+      <view class="stat-card">
+        <text class="stat-value">{{overview ? overview.unassigned_project_messages : 0}}</text>
+        <text class="stat-label">待归档</text>
+      </view>
+      <view class="stat-card">
+        <text class="stat-value">{{overview ? overview.pending_analysis_messages : 0}}</text>
+        <text class="stat-label">待分析</text>
+      </view>
+      <view class="stat-card">
+        <text class="stat-value">{{overview ? overview.project_count : 0}}</text>
+        <text class="stat-label">项目数</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="panel insight-panel">
+    <view class="panel-title">{{insightTitle}}</view>
+    <view class="trend-row" wx:if="{{activity.length}}">
+      <view class="trend-item" wx:for="{{activity}}" wx:key="date">
+        <view class="trend-bar" style="height: {{item.barHeight}}"></view>
+        <text class="trend-day">{{item.date}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="panel">
+    <view class="section-head">
+      <view class="section-title">分类视图</view>
+      <view class="section-action" bindtap="openCategoryDialog">+ 分类</view>
+    </view>
+
+    <scroll-view scroll-x class="chip-scroll" show-scrollbar="{{false}}">
+      <view class="chip-row">
+        <view class="filter-chip {{currentTab === 'all' ? 'active' : ''}}" data-category="all" bindtap="selectCategory">全部</view>
+        <view class="filter-chip {{item.active ? 'active' : ''}}" wx:for="{{categoryOptions}}" wx:key="value" data-category="{{item.value}}" bindtap="selectCategory">{{item.label}}</view>
+      </view>
+    </scroll-view>
+
+    <scroll-view scroll-x class="chip-scroll chip-scroll-tight" show-scrollbar="{{false}}">
+      <view class="chip-row">
+        <view class="subfilter-chip {{item.active ? 'active' : ''}}" wx:for="{{timeOptions}}" wx:key="value" data-time="{{item.value}}" bindtap="setTime">{{item.label}}</view>
+      </view>
+    </scroll-view>
+
+    <scroll-view scroll-x class="chip-scroll chip-scroll-tight" show-scrollbar="{{false}}">
+      <view class="chip-row">
+        <view class="soft-chip {{item.active ? 'active' : ''}}" wx:for="{{typeOptions}}" wx:key="value" data-type="{{item.value}}" bindtap="setTypeFilter">{{item.label}}</view>
+      </view>
+    </scroll-view>
+
+    <view class="project-summary" bindtap="openProjectPanel">
+      <text class="project-summary-label">项目筛选</text>
+      <text class="project-summary-value">{{selectedProjectLabel}}</text>
+    </view>
+  </view>
+
+  <view class="message-section">
+    <view class="section-head">
+      <view class="section-title">消息收件箱</view>
+      <view class="message-count">{{messages.length}} 条</view>
+    </view>
+
+    <view wx:if="{{loading && messages.length === 0}}" class="loading-wrap">
+      <view class="skeleton-card">
+        <view class="skeleton-badge shimmer"></view>
+        <view class="skeleton-title shimmer"></view>
+      </view>
+      <view class="skeleton-card">
+        <view class="skeleton-badge shimmer"></view>
+        <view class="skeleton-title shimmer"></view>
+      </view>
+    </view>
+
+    <view wx:elif="{{!loading && messages.length === 0}}" class="empty-panel">
+      <image class="state-illustration" src="/images/illustrations/inbox-empty.svg" mode="aspectFit" />
+      <view class="empty-title">这里还没有命中的消息</view>
+      <view class="empty-tip">换个筛选条件，或者从底部录入一条新消息。</view>
+    </view>
+
+    <view wx:else class="message-list">
+      <view class="message-card" wx:for="{{messages}}" wx:key="msgid" data-msgid="{{item.msgid}}" bindtap="goDetail">
+        <view class="message-layout">
+          <view class="message-icon">
+            <image src="{{item.displayIcon}}" class="message-icon-img" />
+          </view>
+          <view class="message-main">
+            <view class="message-top">
+              <view class="message-copy">
+                <view class="message-summary">{{item.displaySummary}}</view>
+              </view>
+              <view class="message-time">{{item.displayTime}}</view>
+            </view>
+
+            <view class="message-meta">
+              <view class="meta-pill meta-pill-primary">{{item.displayCategory}}</view>
+              <view class="meta-pill" wx:if="{{item.message.project_id}}" style="color: {{item.displayProjectColor}}; border-color: {{item.displayProjectColor}};">
+                {{item.displayProjectName}}
+              </view>
+              <view class="meta-pill">{{item.displayTypeLabel}}</view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view wx:if="{{loadingMore}}" class="loading-more">加载更多中...</view>
+      <view wx:elif="{{!hasMore && messages.length > 0}}" class="loading-more muted">已经到底了</view>
+    </view>
+  </view>
+</view>
+
+<view class="bottom-bar {{showAttach ? 'attach-open' : ''}}">
+  <view class="input-shell">
+    <view class="attach-plus" bindtap="toggleAttach">+</view>
+    <input
+      class="text-input text-input-wechat"
+      placeholder="输入文字或粘贴链接"
+      value="{{inputText}}"
+      bindinput="onInput"
+      confirm-type="send"
+      bindconfirm="sendText"
+    />
+    <view class="send-btn {{inputText.length ? 'active' : ''}}" bindtap="sendText">
+      <text class="send-btn-icon">↑</text>
+      <text>{{sending ? '处理中' : '上传'}}</text>
+    </view>
+  </view>
+  <view class="attach-row {{showAttach ? 'show' : ''}}">
+    <view class="attach-card" bindtap="chooseImage">
+      <image class="attach-icon" src="/images/icons/image.svg" />
+      <text class="attach-label">图片</text>
+    </view>
+    <view class="attach-card" bindtap="chooseFile">
+      <image class="attach-icon" src="/images/icons/file.svg" />
+      <text class="attach-label">文件</text>
+    </view>
+  </view>
+</view>
+
+<t-popup visible="{{showProjectPicker}}" bind:visible-change="onProjectPickerClose" placement="bottom">
+  <view class="sheet-panel">
+    <view class="sheet-head">
+      <view class="sheet-title">项目面板</view>
+      <text class="sheet-close" bindtap="closeProjectPicker">×</text>
+    </view>
+
+    <input class="sheet-search-input" placeholder="搜索项目" value="{{projectSearchKeyword}}" bindinput="onProjectSearchInput" />
+
+    <view class="sheet-list">
+      <view class="sheet-item {{projectFilter === 'all' ? 'active' : ''}}" bindtap="clearProjectFilter">
+        <text>全部项目</text>
+        <text class="sheet-item-count">当前</text>
+      </view>
+      <view class="sheet-item {{item.active ? 'active' : ''}}" wx:for="{{filteredProjects}}" wx:key="id" data-projectid="{{item.id}}" bindtap="selectProjectFilter">
+        <text>{{item.name}}</text>
+        <text class="sheet-item-count">{{item.msg_count}} 条</text>
+      </view>
+    </view>
+
+    <view class="sheet-create" bindtap="openProjectDialog">+ 新建项目</view>
+  </view>
+</t-popup>
+
+<t-popup visible="{{showCategoryDialog}}" placement="bottom" bind:visible-change="closeCategoryDialog">
+  <view class="dialog-panel">
+    <view class="dialog-title">新建分类</view>
+    <input class="dialog-input" type="text" value="{{categoryInput}}" bindinput="onCategoryInput" placeholder="比如：客户、待办、灵感" />
+    <view class="dialog-actions">
+      <view class="dialog-btn dialog-btn-muted" bindtap="closeCategoryDialog">取消</view>
+      <view class="dialog-btn" bindtap="confirmCreateCategory">创建</view>
+    </view>
+  </view>
+</t-popup>
+
+<t-popup visible="{{showProjectDialog}}" placement="bottom" bind:visible-change="closeProjectDialog">
+  <view class="dialog-panel">
+    <view class="dialog-title">新建项目</view>
+    <input class="dialog-input" type="text" value="{{projectInput}}" bindinput="onProjectInput" placeholder="比如：六月运营、个人资料库" />
+    <view class="dialog-actions">
+      <view class="dialog-btn dialog-btn-muted" bindtap="closeProjectDialog">取消</view>
+      <view class="dialog-btn" bindtap="confirmCreateProject">创建</view>
+    </view>
+  </view>
+</t-popup>

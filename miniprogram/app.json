@@ -1,0 +1,33 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/message-detail/detail",
+    "pages/search/search",
+    "pages/settings/settings",
+    "pages/webview/webview"
+  ],
+  "window": {
+    "navigationStyle": "custom",
+    "backgroundColor": "#f3f3f3"
+  },
+  "sitemapLocation": "sitemap.json",
+  "usingComponents": {
+    "t-button": "tdesign-miniprogram/button/button",
+    "t-icon": "tdesign-miniprogram/icon/icon",
+    "t-cell": "tdesign-miniprogram/cell/cell",
+    "t-tag": "tdesign-miniprogram/tag/tag",
+    "t-toast": "tdesign-miniprogram/toast/toast",
+    "t-dialog": "tdesign-miniprogram/dialog/dialog",
+    "t-loading": "tdesign-miniprogram/loading/loading",
+    "t-navbar": "tdesign-miniprogram/navbar/navbar",
+    "t-tabs": "tdesign-miniprogram/tabs/tabs",
+    "t-tab-panel": "tdesign-miniprogram/tab-panel/tab-panel",
+    "t-input": "tdesign-miniprogram/input/input",
+    "t-popup": "tdesign-miniprogram/popup/popup",
+    "t-swipe-cell": "tdesign-miniprogram/swipe-cell/swipe-cell",
+    "t-search": "tdesign-miniprogram/search/search",
+    "t-action-sheet": "tdesign-miniprogram/action-sheet/action-sheet",
+    "t-empty": "tdesign-miniprogram/empty/empty",
+    "t-cell-group": "tdesign-miniprogram/cell-group/cell-group"
+  }
+}

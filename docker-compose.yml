@@ -1,0 +1,22 @@
+version: "3.9"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data          # 数据库持久化
+      - ./media:/app/media        # 媒体文件持久化
+      - ./.env:/app/.env          # 配置文件
+    environment:
+      - TZ=Asia/Shanghai
+    restart: unless-stopped
+    # 日志限制
+    logging:
+      driver: "local"
+      options:
+        max-size: "10m"
+        max-file: "3"

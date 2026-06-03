@@ -1,0 +1,216 @@
+<t-navbar title="消息详情" background="#f6f1e8" color="#16302b" fixed="{{true}}" left-arrow="{{false}}">
+  <view slot="left" class="nav-back" bindtap="goBack">
+    <image class="nav-back-icon" src="/images/icons/chevron-left.svg" />
+    <text class="nav-back-text">返回</text>
+  </view>
+</t-navbar>
+
+<view class="page-shell" wx:if="{{msg}}">
+  <view class="hero-card">
+    <view class="hero-orb hero-orb-a"></view>
+    <view class="hero-orb hero-orb-b"></view>
+
+    <view class="hero-top">
+      <view>
+        <view class="hero-kicker">MESSAGE DECISION VIEW</view>
+        <view class="hero-status hero-status-{{statusTone}}">{{statusLabel}}</view>
+      </view>
+      <view class="hero-type">{{typeLabel}}</view>
+    </view>
+
+    <view class="hero-title">{{summaryText}}</view>
+
+    <view class="hero-tags">
+      <view class="hero-pill hero-pill-primary">{{analysis ? analysis.category : '未分类'}}</view>
+      <view class="hero-pill" wx:if="{{projectName}}" style="color: {{projectColor}}; border-color: {{projectColor}};">{{projectName}}</view>
+      <view class="hero-pill" wx:if="{{platformInfo.show}}">{{platformInfo.name}}</view>
+    </view>
+  </view>
+
+  <view class="panel media-panel" wx:if="{{mediaPreview}}">
+    <view class="section-head">
+      <view class="section-title">{{mediaPreview.type === 'image' ? '图片预览' : '文件预览'}}</view>
+      <view class="section-action" wx:if="{{mediaPreview.type === 'image'}}" bindtap="previewImage">查看大图</view>
+      <view class="section-action" wx:elif="{{mediaPreview.type === 'file'}}" bindtap="openMediaFile">打开文件</view>
+    </view>
+
+    <view wx:if="{{mediaPreview.type === 'image'}}" class="image-preview-card" bindtap="previewImage">
+      <image class="image-preview" src="{{mediaPreview.previewUrl}}" mode="aspectFill" />
+      <view class="image-preview-mask">
+        <view class="image-preview-title">{{mediaPreview.title}}</view>
+      </view>
+    </view>
+
+    <view wx:elif="{{mediaPreview.type === 'file'}}" class="file-preview-card" bindtap="openMediaFile">
+      <image class="file-preview-icon" src="/images/icons/file.svg" />
+      <view class="file-preview-copy">
+        <view class="file-preview-title">{{mediaPreview.title}}</view>
+        <view class="file-preview-link">点击打开文件原件</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="panel">
+    <view class="section-head">
+      <view class="section-title">快速判断</view>
+      <view class="section-action" bindtap="copySummary">复制摘要</view>
+    </view>
+
+    <view class="quick-grid">
+      <view
+        class="quick-card {{item.editable ? 'quick-card-editable' : ''}}"
+        wx:for="{{quickCards}}"
+        wx:key="key"
+        data-action="{{item.action}}"
+        bindtap="onQuickCardTap"
+      >
+        <view class="quick-card-top">
+          <view class="quick-label">{{item.label}}</view>
+          <view class="quick-edit" wx:if="{{item.editable}}">编辑</view>
+        </view>
+        <view class="quick-value">{{item.value}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="panel">
+    <view class="section-head">
+      <view class="section-title">AI 判断</view>
+    </view>
+
+    <view class="content-list">
+      <view class="content-card" wx:for="{{aiItems}}" wx:key="key">
+        <view class="content-card-top">
+          <view class="content-label">{{item.label}}</view>
+          <view class="content-tools">
+            <view
+              class="content-copy"
+              wx:if="{{item.copyable}}"
+              data-value="{{item.value}}"
+              bindtap="copyValue"
+            >
+              复制
+            </view>
+            <view
+              class="content-edit"
+              wx:if="{{item.editable}}"
+              data-action="{{item.action}}"
+              bindtap="onAiActionTap"
+            >
+              {{item.key === 'summary' ? '改摘要' : '改分类'}}
+            </view>
+          </view>
+        </view>
+        <view class="content-value">{{item.value}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="panel" wx:for="{{contentSections}}" wx:key="title">
+    <view class="section-head">
+      <view class="section-title">{{item.title}}</view>
+      <view
+        class="section-action"
+        wx:if="{{item.title === '来源信息' && platformInfo.show && (platformInfo.url || platformInfo.originalUrl)}}"
+        bindtap="openPrimaryLink"
+      >
+        打开原文
+      </view>
+    </view>
+
+    <view class="content-list">
+      <view class="content-card" wx:for="{{item.items}}" wx:key="label" wx:for-item="field">
+        <view class="content-card-top">
+          <view class="content-label">{{field.label}}</view>
+          <view class="content-copy" wx:if="{{field.copyable}}" data-value="{{field.value}}" bindtap="copyValue">复制</view>
+        </view>
+        <view
+          class="content-value {{field.isLink ? 'content-link' : ''}}"
+          data-link="{{field.isLink}}"
+          data-value="{{field.value}}"
+          bindtap="onContentValueTap"
+        >
+          {{field.value}}
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="panel actions-panel">
+    <view class="section-title">后续处理</view>
+    <view class="action-toolbar">
+      <view class="action-tool action-tool-primary" bindtap="openReanalyzeDialog">
+        <view class="action-tool-title">带意见重分析</view>
+      </view>
+      <view class="action-tool action-tool-danger" bindtap="deleteMsg">
+        <view class="action-tool-title">删除消息</view>
+      </view>
+    </view>
+  </view>
+</view>
+
+<view wx:elif="{{error}}" class="error-wrap">
+  <image class="state-illustration" src="/images/illustrations/detail-state.svg" mode="aspectFit" />
+  <view class="error-title">加载失败</view>
+  <view class="error-text">{{error}}</view>
+</view>
+
+<view wx:else class="loading-wrap">
+  <image class="state-illustration state-illustration-loading" src="/images/illustrations/detail-state.svg" mode="aspectFit" />
+  <t-loading size="32" />
+</view>
+
+<t-popup visible="{{showProjectSheet}}" placement="bottom" bind:visible-change="onProjectSheetClose">
+  <view class="sheet-panel">
+    <view class="sheet-head">
+      <view class="sheet-title">选择归档项目</view>
+      <text class="sheet-close" bindtap="closeProjectSheet">×</text>
+    </view>
+
+    <view class="sheet-item {{!msg.message.project_id ? 'active' : ''}}" bindtap="removeProject">
+      <text>未归档</text>
+      <text class="sheet-item-count">默认</text>
+    </view>
+
+    <view class="sheet-item {{msg.message.project_id === item.id ? 'active' : ''}}" wx:for="{{projects}}" wx:key="id" data-pid="{{item.id}}" bindtap="selectProject">
+      <text>{{item.name}}</text>
+      <text class="sheet-item-count">{{item.msg_count}} 条</text>
+    </view>
+  </view>
+</t-popup>
+
+<t-popup visible="{{showCategorySheet}}" placement="bottom" bind:visible-change="onCategorySheetClose">
+  <view class="sheet-panel">
+    <view class="sheet-head">
+      <view class="sheet-title">调整分类</view>
+      <text class="sheet-close" bindtap="closeCategorySheet">×</text>
+    </view>
+
+    <view class="sheet-item {{analysis && analysis.category === item ? 'active' : ''}}" wx:for="{{categories}}" wx:key="*this" data-category="{{item}}" bindtap="selectCategory">
+      <text>{{item}}</text>
+      <text class="sheet-item-count">{{analysis && analysis.category === item ? '当前' : '可选'}}</text>
+    </view>
+  </view>
+</t-popup>
+
+<t-popup visible="{{showEditDialog}}" placement="bottom" bind:visible-change="onEditDialogClose">
+  <view class="dialog-panel">
+    <view class="dialog-title">修改摘要</view>
+    <textarea class="dialog-textarea" value="{{editText}}" bindinput="onEditInput" placeholder="用一句话写清这条消息的核心信息..." maxlength="120"></textarea>
+    <view class="dialog-actions">
+      <view class="dialog-btn dialog-btn-muted" bindtap="cancelEdit">取消</view>
+      <view class="dialog-btn" bindtap="saveDesc">保存</view>
+    </view>
+  </view>
+</t-popup>
+
+<t-popup visible="{{showReanalyzeDialog}}" placement="bottom" bind:visible-change="onReanalyzeDialogClose">
+  <view class="dialog-panel">
+    <view class="dialog-title">带意见重分析</view>
+    <textarea class="dialog-textarea dialog-textarea-tall" value="{{reanalyzeFeedback}}" bindinput="onReanalyzeInput" placeholder="例如：这条更适合归到工作，不是杂记；重点是羽毛球教学方法..." maxlength="240"></textarea>
+    <view class="dialog-actions">
+      <view class="dialog-btn dialog-btn-muted" bindtap="closeReanalyzeDialog">取消</view>
+      <view class="dialog-btn" bindtap="submitReanalyze">重新分析</view>
+    </view>
+  </view>
+</t-popup>

@@ -1,0 +1,116 @@
+﻿<t-navbar title="本地设置" background="#f6f1e8" color="#16302b" fixed="{{true}}" left-arrow="{{false}}">
+  <view slot="left" class="nav-back" bindtap="goBack">
+    <image class="nav-back-icon" src="/images/icons/chevron-left.svg" />
+    <text class="nav-back-text">返回</text>
+  </view>
+</t-navbar>
+
+<view class="page-shell">
+  <view class="hero-card">
+    <view class="hero-title">本地优先模式</view>
+    <view class="hero-meta-row">
+      <view class="hero-chip">存储: 本地</view>
+      <view class="hero-chip">AI: {{aiProviderMode === 'siliconflow_proxy' ? '默认智能通道' : '自配 MiMo'}}</view>
+    </view>
+  </view>
+
+  <view class="panel">
+    <view class="panel-title">AI 通道</view>
+    <view class="inline-actions inline-actions-top">
+      <view class="minor-action" bindtap="showApiKeyGuide">查看说明</view>
+    </view>
+
+    <view class="provider-list">
+      <view class="provider-card {{item.active ? 'provider-card-active' : ''}}" wx:for="{{providerOptions}}" wx:key="value" data-value="{{item.value}}" bindtap="selectProvider">
+        <view class="provider-title">{{item.title}}</view>
+        <view class="provider-desc">{{item.desc}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="panel">
+    <view class="panel-title">默认智能通道</view>
+    <view class="status-row">
+      <text class="status-label">服务状态</text>
+      <text class="status-value">这是我们内置的 Vercel 轻服务地址，不需要用户手动填写。</text>
+    </view>
+    <view class="inline-actions">
+      <view class="minor-action" bindtap="validateDefaultChannel">{{checkingProxy ? '校验中...' : '校验默认通道'}}</view>
+      <view class="minor-action">{{proxyStatus}}</view>
+    </view>
+  </view>
+
+  <view class="panel">
+    <view class="panel-title">SiliconFlow Key</view>
+    <view class="status-row">
+      <text class="status-label">本地 SiliconFlow Key</text>
+      <text class="status-value">{{savedSiliconflowApiKeyMask}}</text>
+    </view>
+    <input class="field-input" password="{{true}}" value="{{siliconflowApiKey}}" bindinput="onSiliconflowApiKeyInput" placeholder="可选：输入你自己的 SiliconFlow API Key" />
+    <view class="warning-text">如果你填写自己的 SiliconFlow Key，请求默认智能通道时会优先使用你的 Key；不填写时则使用我们服务端内置的默认 Key。</view>
+    <view class="inline-actions">
+      <view class="minor-action">{{siliconflowKeyStatus}}</view>
+      <view class="minor-action minor-action-danger" bindtap="clearSiliconflowApiKey">清空 SiliconFlow Key</view>
+    </view>
+  </view>
+
+  <view class="panel">
+    <view class="panel-title">MiMo Key</view>
+    <view class="status-row">
+      <text class="status-label">本地 MiMo Key</text>
+      <text class="status-value">{{savedMimoApiKeyMask}}</text>
+    </view>
+    <input class="field-input" password="{{true}}" value="{{mimoApiKey}}" bindinput="onMimoApiKeyInput" placeholder="输入你自己的 MiMo API Key" />
+    <view class="warning-text">MiMo 作为可选备用通道，只有在你保存并主动校验后才会启用。Key 只保存在当前设备本地。</view>
+    <view class="inline-actions">
+      <view class="minor-action" bindtap="validateMimoKey">{{checkingMimo ? '校验中...' : '校验 MiMo Key'}}</view>
+      <view class="minor-action">{{mimoKeyStatus}}</view>
+      <view class="minor-action minor-action-danger" bindtap="clearMimoApiKey">清空 MiMo Key</view>
+    </view>
+  </view>
+
+  <view class="panel">
+    <view class="panel-title">当前状态</view>
+    <view class="status-row">
+      <text class="status-label">存储模式</text>
+      <text class="status-value">消息、图片、文件默认只保存在当前设备本地，不会上传到我们的云端数据库。</text>
+    </view>
+    <view class="status-grid">
+      <view class="status-metric">
+        <text class="status-metric-label">消息数</text>
+        <text class="status-metric-value">{{messageCount}}</text>
+      </view>
+      <view class="status-metric">
+        <text class="status-metric-label">项目数</text>
+        <text class="status-metric-value">{{projectCount}}</text>
+      </view>
+      <view class="status-metric">
+        <text class="status-metric-label">分类数</text>
+        <text class="status-metric-value">{{categoryCount}}</text>
+      </view>
+      <view class="status-metric">
+        <text class="status-metric-label">文件体积</text>
+        <text class="status-metric-value">{{totalFileSize}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="panel">
+    <view class="panel-title">导出与恢复</view>
+    <view class="status-row">
+      <text class="status-label">导出索引</text>
+      <text class="status-value">导出消息索引、分类、项目和摘要，适合做迁移或备份。</text>
+    </view>
+    <view class="status-row">
+      <text class="status-label">导出文件清单</text>
+      <text class="status-value">导出当前本地仓的文件清单。后续会继续补迁移包导出与导入。</text>
+    </view>
+    <view class="inline-actions">
+      <view class="minor-action" bindtap="exportIndex">{{exportingIndex ? '导出中...' : '导出索引'}}</view>
+      <view class="minor-action" bindtap="exportManifest">{{exportingManifest ? '导出中...' : '导出文件清单'}}</view>
+      <view class="minor-action" bindtap="copyTutorial">复制教程</view>
+    </view>
+  </view>
+
+  <view class="save-btn" bindtap="saveSettings">保存设置</view>
+</view>

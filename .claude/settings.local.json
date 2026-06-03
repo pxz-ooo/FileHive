@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(PYTHONPATH=/d/ccprojects/FileHive /d/env/anaconda3/envs/llm/python.exe *)",
+      "Bash(npm --version)"
+    ]
+  }
+}

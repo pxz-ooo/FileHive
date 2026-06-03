@@ -1,0 +1,1 @@
+/* TDesign icon font is loaded at runtime in app.js to avoid local font URLs in miniprogram_npm CSS. */

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>微信整理助手 - 手动提交</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; color: #333; min-height: 100vh; }
+.container { max-width: 700px; margin: 0 auto; padding: 24px 16px; }
+.header { text-align: center; padding: 32px 0 24px; }
+.header h1 { font-size: 24px; font-weight: 600; color: #1a1a1a; }
+.header p { font-size: 14px; color: #999; margin-top: 6px; }
+.card { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; color: #444; }
+.form-group textarea { width: 100%; min-height: 140px; padding: 12px; border: 1px solid #dcdfe6; border-radius: 8px; font-size: 14px; line-height: 1.6; resize: vertical; transition: border-color .2s; font-family: inherit; }
+.form-group textarea:focus { outline: none; border-color: #409eff; }
+.form-group textarea::placeholder { color: #c0c4cc; }
+.type-selector { display: flex; gap: 8px; margin-bottom: 16px; }
+.type-btn { flex: 1; padding: 10px; border: 1px solid #dcdfe6; border-radius: 8px; background: #fff; cursor: pointer; font-size: 14px; text-align: center; transition: all .2s; }
+.type-btn:hover { border-color: #409eff; color: #409eff; }
+.type-btn.active { background: #409eff; color: #fff; border-color: #409eff; }
+.submit-btn { width: 100%; padding: 12px; background: #409eff; color: #fff; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; transition: background .2s; }
+.submit-btn:hover { background: #337ecc; }
+.submit-btn:disabled { background: #a0cfff; cursor: not-allowed; }
+.result-card { display: none; }
+.result-card.show { display: block; }
+.result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #eee; }
+.result-header h3 { font-size: 16px; color: #1a1a1a; }
+.category-tag { display: inline-block; padding: 4px 14px; background: #fdf6ec; color: #e6a23c; border-radius: 20px; font-size: 13px; font-weight: 500; }
+.summary-text { font-size: 16px; font-weight: 500; color: #1a1a1a; margin: 12px 0; padding: 12px; background: #f5f7fa; border-radius: 8px; line-height: 1.6; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+.tag { display: inline-block; padding: 3px 10px; background: #ecf5ff; color: #409eff; border-radius: 12px; font-size: 12px; }
+.reason { font-size: 13px; color: #999; line-height: 1.6; margin-top: 8px; padding: 10px; background: #fafafa; border-radius: 6px; }
+.hint-text { font-size: 12px; color: #c0c4cc; margin-top: 4px; }
+.links { text-align: center; margin-top: 24px; font-size: 13px; }
+.links a { color: #409eff; text-decoration: none; margin: 0 8px; }
+.links a:hover { text-decoration: underline; }
+.loading { text-align: center; padding: 20px; color: #999; }
+.loading::after { content: ''; display: inline-block; width: 16px; height: 16px; border: 2px solid #e0e0e0; border-top-color: #409eff; border-radius: 50%; animation: spin .8s linear infinite; margin-left: 8px; vertical-align: middle; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.error { padding: 12px; background: #fef0f0; color: #f56c6c; border-radius: 8px; font-size: 14px; text-align: center; }
+.success-hint { text-align: center; padding: 8px; color: #67c23a; font-size: 13px; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>微信整理助手</h1>
+    <p>粘贴内容 → AI自动分类 + 摘要 + 打标签</p>
+  </div>
+
+  <div class="card">
+    <div class="type-selector">
+      <button class="type-btn active" data-type="text" onclick="selectType('text')">📝 文本</button>
+      <button class="type-btn" data-type="link" onclick="selectType('link')">🔗 链接</button>
+    </div>
+
+    <div class="form-group">
+      <textarea id="contentInput" placeholder="在此粘贴微信聊天内容、文章链接、笔记文字等..."></textarea>
+      <div class="hint-text" id="hintText">支持文本和链接，AI会自动分类和总结</div>
+    </div>
+
+    <button class="submit-btn" id="submitBtn" onclick="submitContent()">提交分析</button>
+    <div class="success-hint" id="successHint" style="display:none"></div>
+  </div>
+
+  <div class="card result-card" id="resultCard">
+    <div class="result-header">
+      <h3>AI 分析结果</h3>
+      <span class="category-tag" id="categoryTag">-</span>
+    </div>
+    <div class="summary-text" id="summaryText">-</div>
+    <div class="tags" id="tagsContainer"></div>
+    <div class="reason" id="reasonText"></div>
+    <div style="margin-top: 12px; text-align: right; font-size: 12px; color: #c0c4cc">
+      <a id="detailLink" href="#" target="_blank" style="color:#409eff;text-decoration:none">查看详情 →</a>
+    </div>
+  </div>
+
+  <div class="links">
+    <a href="/messages" target="_blank">📋 消息管理</a>
+    <a href="/" target="_blank">📊 概览</a>
+  </div>
+</div>
+
+<script>
+let selectedType = 'text';
+
+function selectType(type) {
+  selectedType = type;
+  document.querySelectorAll('.type-btn').forEach(b => b.classList.toggle('active', b.dataset.type === type));
+  const hint = document.getElementById('hintText');
+  if (type === 'link') {
+    hint.textContent = '粘贴链接URL，或输入"标题\n描述\nURL"的格式';
+  } else {
+    hint.textContent = '支持文本和链接，AI会自动分类和总结';
+  }
+}
+
+async function submitContent() {
+  const content = document.getElementById('contentInput').value.trim();
+  if (!content) {
+    document.getElementById('successHint').textContent = '⚠️ 请先粘贴内容';
+    document.getElementById('successHint').style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = '分析中...';
+  document.getElementById('successHint').style.display = 'none';
+  document.getElementById('resultCard').classList.remove('show');
+
+  try {
+    const formData = new FormData();
+    formData.append('content', content);
+    formData.append('msg_type', selectedType);
+
+    const res = await fetch('/ingest', { method: 'POST', body: formData });
+    const data = await res.json();
+
+    if (data.error) {
+      document.getElementById('successHint').textContent = '❌ ' + data.error;
+      document.getElementById('successHint').style.display = 'block';
+      return;
+    }
+
+    // 显示结果
+    const analysis = data.analysis;
+    document.getElementById('categoryTag').textContent = analysis.category;
+    document.getElementById('summaryText').textContent = analysis.summary;
+
+    const tagsContainer = document.getElementById('tagsContainer');
+    tagsContainer.innerHTML = '';
+    const tags = typeof analysis.tags === 'string' ? JSON.parse(analysis.tags) : analysis.tags;
+    if (tags && tags.length) {
+      tags.forEach(t => {
+        const span = document.createElement('span');
+        span.className = 'tag';
+        span.textContent = t;
+        tagsContainer.appendChild(span);
+      });
+    }
+
+    document.getElementById('reasonText').textContent = '💡 ' + (analysis.reason || '');
+    document.getElementById('detailLink').href = '/messages/' + data.msgid;
+    document.getElementById('resultCard').classList.add('show');
+
+    document.getElementById('successHint').textContent = '✅ 分析完成！';
+    document.getElementById('successHint').style.display = 'block';
+
+  } catch (e) {
+    document.getElementById('successHint').textContent = '❌ 提交失败: ' + e.message;
+    document.getElementById('successHint').style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '提交分析';
+  }
+}
+
+// Ctrl+Enter 快捷键提交
+document.getElementById('contentInput').addEventListener('keydown', e => {
+  if (e.ctrlKey && e.key === 'Enter') submitContent();
+});
+</script>
+
+</body>
+</html>

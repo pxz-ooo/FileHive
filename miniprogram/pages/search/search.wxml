@@ -1,0 +1,91 @@
+<t-navbar title="搜索工作台" background="#f6f1e8" color="#16302b" fixed="{{true}}" bind:left-click="goBack" left-arrow="{{true}}" />
+
+<view class="page-shell">
+  <view class="hero-card">
+    <view class="hero-dot hero-dot-a"></view>
+    <view class="hero-dot hero-dot-b"></view>
+    <view class="hero-title">搜索内容、摘要、分类和项目</view>
+    <view class="hero-subtitle">不仅搜原文，也能按分类、项目、时间和消息类型缩小范围。</view>
+    <t-search value="{{keyword}}" bind:change="onInput" bind:submit="doSearch" placeholder="输入关键词，例如：合同、羽球、报销..." action-text="搜索" />
+  </view>
+
+  <view class="panel" wx:if="{{recentKeywords.length}}">
+    <view class="section-title">最近搜索</view>
+    <view class="recent-row">
+      <view class="recent-chip" wx:for="{{recentKeywords}}" wx:key="*this" data-keyword="{{item}}" bindtap="useRecentKeyword">{{item}}</view>
+    </view>
+  </view>
+
+  <view class="panel">
+    <view class="section-title">筛选条件</view>
+    <view class="section-tip">先用筛选收窄，再按关键词定位会更快。</view>
+
+    <scroll-view scroll-x class="chip-scroll" show-scrollbar="{{false}}">
+      <view class="chip-row">
+        <view class="filter-chip {{currentCategory === 'all' ? 'active' : ''}}" data-category="all" bindtap="selectCategory">全部分类</view>
+        <view class="filter-chip {{currentCategory === item ? 'active' : ''}}" wx:for="{{categories}}" wx:key="*this" data-category="{{item}}" bindtap="selectCategory">{{item}}</view>
+      </view>
+    </scroll-view>
+
+    <scroll-view scroll-x class="chip-scroll" show-scrollbar="{{false}}">
+      <view class="chip-row">
+        <view class="soft-chip {{item.active ? 'active' : ''}}" wx:for="{{typeOptions}}" wx:key="value" data-type="{{item.value}}" bindtap="selectType">{{item.label}}</view>
+      </view>
+    </scroll-view>
+
+    <scroll-view scroll-x class="chip-scroll" show-scrollbar="{{false}}">
+      <view class="chip-row">
+        <view class="soft-chip {{currentProject === 'all' ? 'active' : ''}}" data-projectid="all" bindtap="selectProject">全部项目</view>
+        <view class="soft-chip {{item.active ? 'active' : ''}}" wx:for="{{projects}}" wx:key="id" data-projectid="{{item.id}}" bindtap="selectProject">{{item.name}}</view>
+      </view>
+    </scroll-view>
+
+    <view class="time-row">
+      <view class="subfilter-chip {{timeGroup === 'all' ? 'active' : ''}}" data-time="all" bindtap="selectTime">全部时间</view>
+      <view class="subfilter-chip {{timeGroup === 'today' ? 'active' : ''}}" data-time="today" bindtap="selectTime">今天</view>
+      <view class="subfilter-chip {{timeGroup === 'week' ? 'active' : ''}}" data-time="week" bindtap="selectTime">本周</view>
+      <view class="subfilter-chip {{timeGroup === 'month' ? 'active' : ''}}" data-time="month" bindtap="selectTime">本月</view>
+    </view>
+  </view>
+
+  <view class="result-panel">
+    <view class="section-head">
+      <view>
+        <view class="section-title">搜索结果</view>
+        <view class="section-tip" wx:if="{{searched}}">共找到 {{total}} 条结果</view>
+      </view>
+    </view>
+
+    <view wx:if="{{searched && results.length === 0}}" class="empty-panel">
+      <image class="state-illustration" src="/images/illustrations/search-empty.svg" mode="aspectFit" />
+      <view class="empty-title">没有找到匹配内容</view>
+      <view class="empty-tip">换一个关键词，或者放宽筛选条件试试。</view>
+    </view>
+
+    <view wx:elif="{{results.length}}" class="result-list">
+      <view class="result-card" wx:for="{{results}}" wx:key="msgid" data-msgid="{{item.msgid || item.message.msgid}}" bindtap="goDetail">
+        <view class="result-top">
+          <view class="result-icon">
+            <image src="{{item.displayIcon}}" class="result-icon-img" />
+          </view>
+          <view class="result-copy">
+            <view class="result-title">{{item.displaySummary}}</view>
+            <view class="result-preview">{{item.displayPreview}}</view>
+          </view>
+          <view class="result-time">{{item.displayTime}}</view>
+        </view>
+        <view class="result-meta">
+          <view class="meta-pill meta-pill-primary">{{item.displayCategory}}</view>
+          <view class="meta-pill" wx:if="{{item.message.project_id}}">{{item.displayProjectName}}</view>
+          <view class="meta-pill">{{item.displayTypeLabel}}</view>
+        </view>
+      </view>
+    </view>
+
+    <view wx:else class="empty-panel">
+      <image class="state-illustration" src="/images/illustrations/search-empty.svg" mode="aspectFit" />
+      <view class="empty-title">准备开始搜索</view>
+      <view class="empty-tip">输入关键词后，这里会展示匹配到的摘要和消息。</view>
+    </view>
+  </view>
+</view>
