@@ -67,6 +67,19 @@ function getPreview(rawContent, msgType) {
   return '查看详情内容'
 }
 
+function getLinkDisplayInfo(rawContent, analysis) {
+  const data = parseRawContent(rawContent)
+  const link = (data && data.link) || {}
+  const platform = sanitizeText(link.platform)
+  const title = sanitizeText(link.title || analysis.summary || analysis.desc)
+  const desc = sanitizeText(link.desc || link.raw_text || link.url)
+  const fallback = sanitizeText(analysis.summary || analysis.desc || desc || title || '链接消息')
+  return {
+    displaySummary: sanitizeText(platform ? `${platform} · ${title || desc || '链接内容'}` : (title || fallback)) || '链接消息',
+    displayPreview: sanitizeText(desc && desc !== title ? desc : (link.url || fallback)),
+  }
+}
+
 function decorateTypeOptions(selectedType) {
   return TYPE_OPTIONS.map((type) => ({
     value: type,
@@ -87,14 +100,17 @@ function decorateResults(results, projects) {
     const message = item.message || {}
     const analysis = item.analysis || {}
     const project = (projects || []).find((projectItem) => String(projectItem.id) === String(message.project_id))
+    const linkDisplay = message.msg_type === 'link'
+      ? getLinkDisplayInfo(message.raw_content, analysis)
+      : null
 
     return {
       ...item,
       msgid: message.msgid || '',
       displayIcon: getTypeIcon(message.msg_type),
-      displaySummary: sanitizeText(analysis.summary || analysis.desc) || '等待分析...',
-      displayCategory: sanitizeText(analysis.category) || '待分析',
-      displayPreview: getPreview(message.raw_content, message.msg_type),
+      displaySummary: (linkDisplay && linkDisplay.displaySummary) || sanitizeText(analysis.summary || analysis.desc) || '等待分析...',
+      displayCategory: sanitizeText(analysis.category) || '待分类',
+      displayPreview: (linkDisplay && linkDisplay.displayPreview) || getPreview(message.raw_content, message.msg_type),
       displayTime: formatDisplayTime(message.send_time),
       displayTypeLabel: getTypeLabel(message.msg_type),
       displayProjectName: sanitizeText(project ? project.name : ''),

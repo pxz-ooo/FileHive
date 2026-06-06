@@ -4,7 +4,7 @@ const store = require('./local-store')
 const MIMO_BASE_URL = 'https://api.xiaomimimo.com/v1'
 const MIMO_FALLBACK_BASE_URL = 'https://token-plan-cn.xiaomimimo.com/v1'
 const MIMO_MODEL = 'mimo-v2.5'
-const SILICONFLOW_MODEL = 'THUDM/GLM-4.1V-9B-Thinking'
+const SILICONFLOW_MODEL = 'Qwen/Qwen3-VL-30B-A3B-Instruct'
 const PROXY_CHAT_PATH = '/api/ai/chat'
 const PROXY_HEALTH_PATH = '/api/ai/health'
 const LINK_PARSE_PATH = '/api/link/parse'
@@ -189,6 +189,49 @@ function simpleFallbackForText(text, msgType) {
   return normalizeAnalysis({ category: '杂记', summary: content.slice(0, 42) || '文本内容', model_used: 'local_rule' }, '杂记', '文本内容')
 }
 
+function extractFirstUrl(text) {
+  const match = String(text || '').match(/(https?:\/\/[^\s]+)|((?:www\.|xhslink\.com|b23\.tv|v\.douyin\.com|mp\.weixin\.qq\.com)[^\s]*)/i)
+  if (!match) return ''
+  const candidate = match[0]
+  return /^https?:\/\//i.test(candidate) ? candidate : `https://${candidate.replace(/^\/+/, '')}`
+}
+
+function buildLinkAnalysisPayload(rawText, parseResult) {
+  const lines = [`分享文案: ${sanitizeText(rawText)}`]
+  if (parseResult && parseResult.ok) {
+    if (parseResult.platform) lines.push(`平台: ${sanitizeText(parseResult.platform)}`)
+    if (parseResult.title) lines.push(`标题: ${sanitizeText(parseResult.title)}`)
+    if (parseResult.desc) lines.push(`摘要: ${sanitizeText(parseResult.desc)}`)
+    if (parseResult.author && parseResult.author.name) lines.push(`作者: ${sanitizeText(parseResult.author.name)}`)
+    if (parseResult.type) lines.push(`内容类型: ${sanitizeText(parseResult.type)}`)
+    if (parseResult.sourceUrl) lines.push(`原始链接: ${sanitizeText(parseResult.sourceUrl)}`)
+    if (parseResult.mediaUrl) lines.push(`提取媒体地址: ${sanitizeText(parseResult.mediaUrl)}`)
+  }
+  return lines.filter(Boolean).join('\n')
+}
+
+function buildLinkRawContent(rawText, parseResult) {
+  const normalized = parseResult && typeof parseResult === 'object' ? parseResult : {}
+  return JSON.stringify({
+    msgtype: 'link',
+    link: {
+      title: sanitizeText(normalized.title || ''),
+      desc: sanitizeText(normalized.desc || ''),
+      url: sanitizeText(normalized.sourceUrl || extractFirstUrl(rawText) || ''),
+      raw_text: sanitizeText(rawText || ''),
+      platform: sanitizeText(normalized.platform || ''),
+      type: sanitizeText(normalized.type || ''),
+      parser: sanitizeText(normalized.parser || ''),
+      parser_message: sanitizeText(normalized.message || ''),
+      media_url: sanitizeText(normalized.mediaUrl || ''),
+      cover: sanitizeText(normalized.cover || ''),
+      author: sanitizeText(normalized.author && normalized.author.name),
+      images: Array.isArray(normalized.images) ? normalized.images.filter(Boolean) : [],
+      music: normalized.music || null,
+    },
+  })
+}
+
 function readFileBase64(filePath) {
   const fs = wx.getFileSystemManager()
   return new Promise((resolve, reject) => {
@@ -310,6 +353,43 @@ async function applyAnalysisToEntry(msgid, analysis, extraMutator) {
 
 async function submitText(content, type = 'text') {
   const entry = await store.createTextEntry(content, type)
+  if (type === 'link') {
+    let parseResult = null
+    try {
+      parseResult = await parseLink(content)
+    } catch (error) {
+      parseResult = null
+    }
+
+    const enrichedText = buildLinkAnalysisPayload(content, parseResult)
+    try {
+      const analysis = await analyzeTextContent(enrichedText, type)
+      await applyAnalysisToEntry(entry.msgid, {
+        ...analysis,
+        summary: analysis.summary || sanitizeText((parseResult && (parseResult.title || parseResult.desc)) || content.slice(0, 42)),
+        desc: analysis.desc || analysis.summary || sanitizeText((parseResult && (parseResult.title || parseResult.desc)) || content.slice(0, 42)),
+      }, (current) => ({
+        ...current,
+        raw_content: buildLinkRawContent(content, parseResult || {}),
+      }))
+    } catch (error) {
+      await applyAnalysisToEntry(entry.msgid, {
+        ...(parseResult && parseResult.ok
+          ? normalizeAnalysis({
+              category: '杂记',
+              summary: sanitizeText(parseResult.title || parseResult.desc || content.slice(0, 42) || '链接内容'),
+              desc: sanitizeText(parseResult.desc || parseResult.title || content.slice(0, 42) || '链接内容'),
+              model_used: 'local_rule',
+            }, '杂记', '链接内容')
+          : simpleFallbackForText(content, type)),
+      }, (current) => ({
+        ...current,
+        raw_content: buildLinkRawContent(content, parseResult || {}),
+      }))
+    }
+    return { ok: true, msgid: entry.msgid }
+  }
+
   try {
     const analysis = await analyzeTextContent(content, type)
     await applyAnalysisToEntry(entry.msgid, analysis)

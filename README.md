@@ -129,19 +129,19 @@ Vercel Functions 轻服务。
    - `SILICONFLOW_BASE_URL`
    - `SILICONFLOW_MODEL`
 4. 重新部署，拿到域名，例如：
-   - `https://your-app.vercel.app`
+   - `https://file-hive-mtf1.vercel.app`
 
 推荐环境变量：
 
 - `SILICONFLOW_BASE_URL=https://api.siliconflow.cn/v1`
-- `SILICONFLOW_MODEL=THUDM/GLM-4.1V-9B-Thinking`
+- `SILICONFLOW_MODEL=Qwen/Qwen3-VL-30B-A3B-Instruct`
 
 ### 2. 写入小程序默认服务地址
 
 打开 `miniprogram/app.js`，把内置占位地址：
 
 ```text
-https://your-filehive-ai.vercel.app
+https://file-hive-mtf1.vercel.app
 ```
 
 替换为你的真实 Vercel 域名。

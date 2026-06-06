@@ -3,8 +3,10 @@ const { readJsonBody, sendJson, setCors } = require('../_lib/http')
 const BUGPK_SHORT_VIDEOS_API = 'https://api.bugpk.com/api/short_videos'
 
 function extractFirstUrl(input) {
-  const match = String(input || '').match(/https?:\/\/[^\s]+/i)
-  return match ? match[0] : ''
+  const match = String(input || '').match(/(https?:\/\/[^\s]+)|((?:www\.|xhslink\.com|b23\.tv|v\.douyin\.com|mp\.weixin\.qq\.com)[^\s]*)/i)
+  if (!match) return ''
+  const candidate = match[0]
+  return /^https?:\/\//i.test(candidate) ? candidate : `https://${candidate.replace(/^\/+/, '')}`
 }
 
 function normalizeBugpkPayload(sourceUrl, payload) {

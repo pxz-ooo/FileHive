@@ -15,7 +15,7 @@
 - `SILICONFLOW_BASE_URL`
   - 推荐：`https://api.siliconflow.cn/v1`
 - `SILICONFLOW_MODEL`
-  - 当前推荐：`THUDM/GLM-4.1V-9B-Thinking`
+- 当前推荐：`Qwen/Qwen3-VL-30B-A3B-Instruct`
   - 如果更重视多模态综合能力，也可换成：`Qwen/Qwen3-Omni-30B-A3B-Instruct`
 
 改完环境变量后，要重新部署一次。
@@ -24,7 +24,7 @@
 
 部署成功后，你会得到一个地址，例如：
 
-`https://your-app.vercel.app`
+`https://file-hive-mtf1.vercel.app`
 
 ## 4. 把域名内置到小程序
 
@@ -36,7 +36,7 @@
 
 把：
 
-`https://your-filehive-ai.vercel.app`
+`https://file-hive-mtf1.vercel.app`
 
 替换成你的真实 Vercel 域名。
 
@@ -49,7 +49,7 @@
 需要配置：
 
 - `request 合法域名`
-  - 填你的 Vercel 域名，例如 `https://your-app.vercel.app`
+  - 填你的 Vercel 域名，例如 `https://file-hive-mtf1.vercel.app`
 - 如果后续 `web-view` 打开网页说明页或外部中转页，再额外配置：
   - `业务域名`
 

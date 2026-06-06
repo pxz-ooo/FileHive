@@ -78,6 +78,11 @@
       <view class="section-title">AI 判断</view>
     </view>
 
+    <view class="debug-notice debug-notice-{{aiDebugNotice.tone}}" wx:if="{{aiDebugNotice.show}}">
+      <view class="debug-notice-title">{{aiDebugNotice.title}}</view>
+      <view class="debug-notice-text">{{aiDebugNotice.text}}</view>
+    </view>
+
     <view class="content-list">
       <view class="content-card" wx:for="{{aiItems}}" wx:key="key">
         <view class="content-card-top">

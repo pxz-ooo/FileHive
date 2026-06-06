@@ -1,4 +1,4 @@
-﻿const DEFAULT_AI_PROXY_BASE_URL = 'https://your-filehive-ai.vercel.app'
+const DEFAULT_AI_PROXY_BASE_URL = 'https://file-hive-mtf1.vercel.app'
 
 App({
   globalData: {
@@ -6,7 +6,7 @@ App({
     aiProxyBaseUrl: DEFAULT_AI_PROXY_BASE_URL,
     siliconflowApiKey: '',
     mimoApiKey: '',
-    siliconflowModel: 'THUDM/GLM-4.1V-9B-Thinking',
+    siliconflowModel: 'Qwen/Qwen3-VL-30B-A3B-Instruct',
     mimoModel: 'mimo-v2.5',
   },
 

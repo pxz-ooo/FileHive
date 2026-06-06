@@ -19,7 +19,7 @@ const TIME_OPTIONS = [
 ]
 
 function containsUrl(text) {
-  return /https?:\/\/[^\s]+/i.test(text || '')
+  return /(https?:\/\/[^\s]+)|((?:www\.|xhslink\.com|b23\.tv|v\.douyin\.com|mp\.weixin\.qq\.com)[^\s]*)/i.test(text || '')
 }
 
 function parseRawContent(rawContent) {
@@ -86,6 +86,23 @@ function getMessagePreview(message) {
   return '查看详情内容'
 }
 
+function getLinkDisplayInfo(message, analysis) {
+  const data = parseRawContent(message && message.raw_content)
+  const link = (data && data.link) || {}
+  const platform = sanitizeText(link.platform)
+  const title = sanitizeText(link.title || analysis.summary || analysis.desc)
+  const desc = sanitizeText(link.desc || link.raw_text || link.url)
+  const fallback = sanitizeText(analysis.summary || analysis.desc || desc || title || '链接内容')
+  const displaySummary = platform
+    ? `${platform} · ${title || desc || '链接内容'}`
+    : (title || fallback)
+  const displayPreview = desc && desc !== title ? desc : (sanitizeText(link.url) || fallback)
+  return {
+    displaySummary: sanitizeText(displaySummary) || '链接内容',
+    displayPreview: sanitizeText(displayPreview),
+  }
+}
+
 function decorateTypeOptions(selectedType) {
   return TYPE_OPTIONS.map((type) => ({
     value: type,
@@ -127,11 +144,17 @@ function decorateMessages(items, projects) {
     const message = item.message || {}
     const analysis = item.analysis || {}
     const projectMeta = getProjectMeta(projects, message.project_id)
+    const linkDisplay = message.msg_type === 'link'
+      ? getLinkDisplayInfo(message, analysis)
+      : null
     return {
       ...item,
       msgid: message.msgid || '',
       displayIcon: getTypeIcon(message.msg_type),
-      displaySummary: sanitizeText(analysis.summary || analysis.desc || getMessagePreview(message)) || '等待分析...',
+      displaySummary: (linkDisplay && linkDisplay.displaySummary)
+        || sanitizeText(analysis.summary || analysis.desc || getMessagePreview(message))
+        || '等待分析...',
+      displayPreview: (linkDisplay && linkDisplay.displayPreview) || sanitizeText(getMessagePreview(message)),
       displayCategory: sanitizeText(analysis.category) || '待分类',
       displayTime: formatDisplayTime(message.send_time),
       displayTypeLabel: getTypeLabel(message.msg_type),

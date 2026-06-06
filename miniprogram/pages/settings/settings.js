@@ -130,7 +130,7 @@ Page({
   validateDefaultChannel() {
     this.setData({ checkingProxy: true, proxyStatus: '校验中...' })
     api.validateProxyService().then((result) => {
-      const model = result.model || 'THUDM/GLM-4.1V-9B-Thinking'
+      const model = result.model || 'Qwen/Qwen3-VL-30B-A3B-Instruct'
       if (result.keyConfigured === false && !((app.globalData.siliconflowApiKey || '').trim())) {
         this.setData({ proxyStatus: '服务在线，但默认 SiliconFlow Key 未配置' })
         wx.showToast({ title: '请联系管理员配置默认 Key', icon: 'none' })

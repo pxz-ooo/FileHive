@@ -89,7 +89,7 @@ function buildPlatformInfo(message) {
   const data = parseRawContent(message.raw_content)
   const link = data.link || {}
   if (message.msg_type !== 'link') {
-    return { show: false, name: '', url: '', originalUrl: '', contentId: '', rawText: '', title: '', desc: '' }
+    return { show: false, name: '', url: '', originalUrl: '', contentId: '', rawText: '', title: '', desc: '', author: '', type: '', mediaUrl: '', parser: '', parserMessage: '' }
   }
   const originalUrl = link.url || ''
   const rawText = link.raw_text || ''
@@ -105,6 +105,11 @@ function buildPlatformInfo(message) {
     rawText,
     title: link.title || '',
     desc: link.desc || '',
+    author: link.author || '',
+    type: link.type || '',
+    mediaUrl: link.media_url || '',
+    parser: link.parser || '',
+    parserMessage: link.parser_message || '',
   }
 }
 
@@ -141,12 +146,62 @@ function buildAiItems(message, analysis, platformInfo, summaryText) {
   ]
 }
 
+function buildAiDebugNotice(analysis) {
+  const modelUsed = sanitizeText(analysis && analysis.model_used)
+  if (!analysis) {
+    return {
+      show: true,
+      tone: 'pending',
+      title: '尚未完成分析',
+      text: '当前还没有生成分析结果，这条消息还未进入 AI 或本地整理阶段。',
+    }
+  }
+  if (!modelUsed || modelUsed === 'local_rule') {
+    return {
+      show: true,
+      tone: 'warning',
+      title: '当前为本地降级结果',
+      text: '这条摘要和分类没有成功走到云端 AI，当前显示的是本地兜底整理结果。',
+    }
+  }
+  const lower = modelUsed.toLowerCase()
+  if (lower.includes('mimo')) {
+    return {
+      show: true,
+      tone: 'ok',
+      title: '当前由 MiMo 分析',
+      text: `模型: ${modelUsed}`,
+    }
+  }
+  if (
+    lower.includes('qwen')
+    || lower.includes('glm')
+    || lower.includes('siliconflow')
+    || lower.includes('vl')
+  ) {
+    return {
+      show: true,
+      tone: 'ok',
+      title: '当前由默认智能通道分析',
+      text: `模型: ${modelUsed}`,
+    }
+  }
+  return {
+    show: true,
+    tone: 'info',
+    title: '当前分析来源',
+    text: `模型: ${modelUsed}`,
+  }
+}
+
 function buildContentSections(message, platformInfo) {
   const data = parseRawContent(message.raw_content)
 
   if (message.msg_type === 'link') {
     const items = []
     if (platformInfo.name) items.push({ label: '来源平台', value: platformInfo.name })
+    if (platformInfo.type) items.push({ label: '内容类型', value: platformInfo.type })
+    if (platformInfo.author) items.push({ label: '作者', value: platformInfo.author, copyable: true })
     if (platformInfo.contentId) items.push({ label: '内容 ID', value: platformInfo.contentId, copyable: true })
     if (platformInfo.title) items.push({ label: '分享标题', value: platformInfo.title, copyable: true })
     if (platformInfo.desc) items.push({ label: '分享摘要', value: platformInfo.desc, copyable: true })
@@ -154,8 +209,20 @@ function buildContentSections(message, platformInfo) {
     if (platformInfo.originalUrl && platformInfo.originalUrl !== platformInfo.url) {
       items.push({ label: '原始链接', value: platformInfo.originalUrl, copyable: true, isLink: true })
     }
+    if (platformInfo.mediaUrl) {
+      items.push({ label: '媒体地址', value: platformInfo.mediaUrl, copyable: true, isLink: true })
+    }
     const sections = []
     if (items.length) sections.push({ title: '来源信息', items })
+    if (platformInfo.parser || platformInfo.parserMessage) {
+      sections.push({
+        title: '解析结果',
+        items: [
+          platformInfo.parser ? { label: '解析器', value: platformInfo.parser } : null,
+          platformInfo.parserMessage ? { label: '解析状态', value: platformInfo.parserMessage } : null,
+        ].filter(Boolean),
+      })
+    }
     if (platformInfo.rawText) {
       sections.push({ title: '分享文案', items: [{ label: '原始文案', value: platformInfo.rawText, copyable: true }] })
     }
@@ -244,6 +311,7 @@ Page({
     modelText: '未记录',
     statusLabel: '待分析',
     statusTone: 'pending',
+    aiDebugNotice: { show: false, tone: 'info', title: '', text: '' },
     quickCards: [],
     aiItems: [],
     platformInfo: { show: false },
@@ -312,6 +380,7 @@ Page({
         modelText,
         statusLabel: status.label,
         statusTone: status.tone,
+        aiDebugNotice: buildAiDebugNotice(analysis),
         quickCards: buildQuickCards(analysis, projectName, displayTime, confidenceText, modelText),
         aiItems: buildAiItems(message, analysis, platformInfo, summaryText),
         platformInfo,
