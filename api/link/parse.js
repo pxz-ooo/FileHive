@@ -8,6 +8,7 @@ const BUGPK_APIS = {
   bilibili: 'https://api.bugpk.com/api/bilibili',
 }
 
+const BUGPK_BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36'
 const WECHAT_IN_APP_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 MicroMessenger/8.0.34(0x16082222) NetType/WIFI Language/zh_CN'
 
 function extractFirstUrl(input) {
@@ -140,8 +141,10 @@ async function fetchJsonFromBugpk(endpoint, url) {
   const upstream = await fetch(`${endpoint}?url=${encodeURIComponent(url)}`, {
     method: 'GET',
     headers: {
-      Accept: 'application/json',
-      'User-Agent': 'FileHive-Link-Parser/1.0',
+      Accept: 'application/json, text/plain, */*',
+      'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+      Referer: 'https://api.bugpk.com/',
+      'User-Agent': BUGPK_BROWSER_UA,
     },
   })
 
