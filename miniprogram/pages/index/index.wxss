@@ -649,9 +649,37 @@ page {
 }
 
 .sheet-group-title {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
   margin-bottom: 12rpx;
-  font-size: 22rpx;
-  color: #8a7e72;
+  padding: 0 6rpx;
+  font-size: 23rpx;
+  font-weight: 700;
+  color: #6e655b;
+}
+
+.sheet-group-title-recent {
+  color: #2f6b5f;
+}
+
+.sheet-group-title-pinned {
+  color: #8a5f24;
+}
+
+.sheet-group-icon {
+  width: 28rpx;
+  height: 28rpx;
+}
+
+.sheet-group-count {
+  min-width: 32rpx;
+  padding: 4rpx 10rpx;
+  border-radius: 999rpx;
+  background: rgba(110, 101, 91, 0.1);
+  color: inherit;
+  font-size: 18rpx;
+  text-align: center;
 }
 
 .sheet-search-input {
@@ -666,13 +694,17 @@ page {
 }
 
 .sheet-item {
+  position: relative;
+  overflow: hidden;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 14rpx;
   padding: 24rpx;
   border-radius: 22rpx;
   background: #fff;
   color: #16302b;
+  border: 2rpx solid transparent;
 }
 
 .sheet-item + .sheet-item {
@@ -681,14 +713,58 @@ page {
 
 .sheet-item.active {
   background: rgba(47, 107, 95, 0.12);
+  border-color: rgba(47, 107, 95, 0.28);
   color: #235346;
+}
+
+.sheet-item-recent {
+  background: linear-gradient(90deg, rgba(47, 107, 95, 0.08) 0%, #fff 34%);
+}
+
+.sheet-item-pinned {
+  background: linear-gradient(90deg, rgba(199, 140, 59, 0.14) 0%, #fffaf2 48%, #fff 100%);
+  border-color: rgba(199, 140, 59, 0.16);
+  box-shadow: 0 10rpx 24rpx rgba(138, 95, 36, 0.08);
+}
+
+.sheet-item-accent {
+  width: 8rpx;
+  height: 54rpx;
+  border-radius: 999rpx;
+  flex-shrink: 0;
 }
 
 .sheet-item-main {
   display: flex;
   flex-direction: column;
   gap: 8rpx;
+  flex: 1;
   min-width: 0;
+}
+
+.sheet-item-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  min-width: 0;
+}
+
+.sheet-item-name {
+  overflow: hidden;
+  font-size: 25rpx;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sheet-item-badge {
+  flex-shrink: 0;
+  padding: 4rpx 10rpx;
+  border-radius: 999rpx;
+  background: rgba(199, 140, 59, 0.18);
+  color: #8a5f24;
+  font-size: 18rpx;
+  font-weight: 600;
 }
 
 @keyframes shimmer {
@@ -720,8 +796,8 @@ page {
 }
 
 .sheet-pin.active {
-  background: rgba(47, 107, 95, 0.12);
-  color: #235346;
+  background: rgba(199, 140, 59, 0.2);
+  color: #8a5f24;
 }
 
 .sheet-empty {

@@ -1,4 +1,5 @@
 const api = require('../../utils/api')
+const linkOpener = require('../../utils/link-opener')
 
 const TYPE_META = {
   text: { label: '文字' },
@@ -430,13 +431,21 @@ Page({
       wx.showToast({ title: '链接无效', icon: 'none' })
       return
     }
-    wx.navigateTo({
-      url: `/pages/webview/webview?url=${encodeURIComponent(url)}`,
-      fail: () => {
-        wx.setClipboardData({ data: url })
-        wx.showToast({ title: '未能直接打开，已复制链接', icon: 'none' })
-      },
+    linkOpener.openSourceLink({
+      url,
+      platform: this.data.platformInfo.name,
+    }).catch((error) => {
+      wx.showToast({ title: error.message || '暂时无法打开链接', icon: 'none' })
     })
+  },
+
+  copyPrimaryLink() {
+    const target = this.data.platformInfo.originalUrl || this.data.platformInfo.url
+    if (!target) {
+      wx.showToast({ title: '链接无效', icon: 'none' })
+      return
+    }
+    linkOpener.copyLink(target)
   },
 
   onContentValueTap(e) {

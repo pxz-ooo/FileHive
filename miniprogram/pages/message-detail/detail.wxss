@@ -378,6 +378,38 @@ page {
   margin-bottom: 20rpx;
 }
 
+.source-action-toolbar {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  gap: 14rpx;
+  margin-bottom: 16rpx;
+}
+
+.source-action {
+  padding: 24rpx;
+  border-radius: 24rpx;
+  background: #efe6d7;
+  color: #16302b;
+}
+
+.source-action-primary {
+  background: linear-gradient(135deg, #235346 0%, #2f6b5f 100%);
+  color: #f8f2e9;
+  box-shadow: 0 14rpx 28rpx rgba(35, 83, 70, 0.18);
+}
+
+.source-action-title {
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.source-action-note {
+  margin-top: 8rpx;
+  font-size: 20rpx;
+  line-height: 1.5;
+  opacity: 0.72;
+}
+
 .action-toolbar {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

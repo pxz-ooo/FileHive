@@ -15,9 +15,19 @@
     "minifyWXML": true
   },
   "compileType": "miniprogram",
+  "miniprogramRoot": "miniprogram/",
   "simulatorPluginLibVersion": {},
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      {
+        "type": "folder",
+        "value": "node_modules"
+      },
+      {
+        "type": "file",
+        "value": "package-lock.json"
+      }
+    ],
     "include": []
   },
   "appid": "wxb1a05e29b22a4d12",

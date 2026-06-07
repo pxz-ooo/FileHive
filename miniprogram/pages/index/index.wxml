@@ -193,10 +193,15 @@
       </view>
 
       <view class="sheet-group" wx:if="{{recentProjects.length}}">
-        <view class="sheet-group-title">最近使用</view>
-        <view class="sheet-item {{item.active ? 'active' : ''}}" wx:for="{{recentProjects}}" wx:key="id" data-projectid="{{item.id}}" bindtap="selectProjectFilter">
+        <view class="sheet-group-title sheet-group-title-recent">
+          <image class="sheet-group-icon" src="/images/icons/clock.svg" />
+          <text>最近使用</text>
+          <text class="sheet-group-count">{{recentProjects.length}}</text>
+        </view>
+        <view class="sheet-item sheet-item-recent {{item.active ? 'active' : ''}}" wx:for="{{recentProjects}}" wx:key="id" data-projectid="{{item.id}}" bindtap="selectProjectFilter">
+          <view class="sheet-item-accent" style="background: {{item.color || '#2f6b5f'}};"></view>
           <view class="sheet-item-main">
-            <text>{{item.name}}</text>
+            <text class="sheet-item-name">{{item.name}}</text>
             <text class="sheet-item-meta">{{item.msg_count}} 条</text>
           </view>
           <view class="sheet-pin {{item.pinned ? 'active' : ''}}" catchtap="toggleProjectPinned" data-projectid="{{item.id}}">置顶</view>
@@ -204,10 +209,18 @@
       </view>
 
       <view class="sheet-group" wx:if="{{pinnedProjects.length}}">
-        <view class="sheet-group-title">置顶项目</view>
-        <view class="sheet-item {{item.active ? 'active' : ''}}" wx:for="{{pinnedProjects}}" wx:key="id" data-projectid="{{item.id}}" bindtap="selectProjectFilter">
+        <view class="sheet-group-title sheet-group-title-pinned">
+          <image class="sheet-group-icon" src="/images/icons/pin.svg" />
+          <text>置顶项目</text>
+          <text class="sheet-group-count">{{pinnedProjects.length}}</text>
+        </view>
+        <view class="sheet-item sheet-item-pinned {{item.active ? 'active' : ''}}" wx:for="{{pinnedProjects}}" wx:key="id" data-projectid="{{item.id}}" bindtap="selectProjectFilter">
+          <view class="sheet-item-accent" style="background: {{item.color || '#c78c3b'}};"></view>
           <view class="sheet-item-main">
-            <text>{{item.name}}</text>
+            <view class="sheet-item-name-row">
+              <text class="sheet-item-name">{{item.name}}</text>
+              <text class="sheet-item-badge">置顶</text>
+            </view>
             <text class="sheet-item-meta">{{item.msg_count}} 条</text>
           </view>
           <view class="sheet-pin active" catchtap="toggleProjectPinned" data-projectid="{{item.id}}">取消置顶</view>
@@ -215,10 +228,15 @@
       </view>
 
       <view class="sheet-group" wx:if="{{allProjects.length}}">
-        <view class="sheet-group-title">{{projectSearchKeyword ? '搜索结果' : '全部项目'}}</view>
+        <view class="sheet-group-title">
+          <image class="sheet-group-icon" src="/images/icons/layers.svg" />
+          <text>{{projectSearchKeyword ? '搜索结果' : '全部项目'}}</text>
+          <text class="sheet-group-count">{{allProjects.length}}</text>
+        </view>
         <view class="sheet-item {{item.active ? 'active' : ''}}" wx:for="{{allProjects}}" wx:key="id" data-projectid="{{item.id}}" bindtap="selectProjectFilter">
+          <view class="sheet-item-accent" style="background: {{item.color || '#8a7e72'}};"></view>
           <view class="sheet-item-main">
-            <text>{{item.name}}</text>
+            <text class="sheet-item-name">{{item.name}}</text>
             <text class="sheet-item-meta">{{item.msg_count}} 条</text>
           </view>
           <view class="sheet-pin {{item.pinned ? 'active' : ''}}" catchtap="toggleProjectPinned" data-projectid="{{item.id}}">{{item.pinned ? '取消置顶' : '置顶'}}</view>

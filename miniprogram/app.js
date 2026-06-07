@@ -24,8 +24,6 @@ App({
     wx.loadFontFace({
       family: 't',
       source: 'url("/fonts/t.woff")',
-      success: () => console.log('icon font loaded'),
-      fail: (e) => console.warn('icon font load failed:', e.errMsg || e),
     })
   },
 

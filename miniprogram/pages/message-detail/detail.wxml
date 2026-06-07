@@ -143,6 +143,16 @@
 
   <view class="panel actions-panel">
     <view class="section-title">后续处理</view>
+    <view class="source-action-toolbar" wx:if="{{platformInfo.show && (platformInfo.url || platformInfo.originalUrl)}}">
+      <view class="source-action source-action-primary" bindtap="openPrimaryLink">
+        <view class="source-action-title">查看原文</view>
+        <view class="source-action-note">自动选择可用的打开方式</view>
+      </view>
+      <view class="source-action" bindtap="copyPrimaryLink">
+        <view class="source-action-title">复制链接</view>
+        <view class="source-action-note">前往对应应用打开</view>
+      </view>
+    </view>
     <view class="action-toolbar">
       <view class="action-tool action-tool-primary" bindtap="openReanalyzeDialog">
         <view class="action-tool-title">带意见重分析</view>
