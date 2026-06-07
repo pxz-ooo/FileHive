@@ -131,58 +131,32 @@ page {
   font-size: 22rpx;
 }
 
-.hero-utility-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 14rpx;
-  margin-top: 18rpx;
-}
-
-.hero-utility {
-  padding: 20rpx 22rpx;
-  border-radius: 24rpx;
-  background: rgba(248, 242, 233, 0.12);
-  border: 2rpx solid rgba(248, 242, 233, 0.16);
-}
-
-.hero-utility-title {
-  font-size: 26rpx;
-  font-weight: 700;
-  color: #f8f2e9;
-}
-
-.hero-utility-value {
-  margin-top: 8rpx;
-  font-size: 22rpx;
-  line-height: 1.6;
-  color: rgba(248, 242, 233, 0.86);
-}
-
-.stats-grid {
+.feature-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 18rpx;
   margin-top: 30rpx;
 }
 
-.stat-card {
+.feature-card {
   padding: 22rpx;
   border-radius: 24rpx;
   background: rgba(248, 242, 233, 0.14);
   backdrop-filter: blur(14rpx);
 }
 
-.stat-value {
+.feature-title {
   display: block;
-  font-size: 40rpx;
+  font-size: 24rpx;
   font-weight: 700;
 }
 
-.stat-label {
+.feature-value {
   margin-top: 8rpx;
   display: block;
   font-size: 22rpx;
-  opacity: 0.82;
+  line-height: 1.6;
+  opacity: 0.9;
 }
 
 .panel,
@@ -245,6 +219,13 @@ page {
   align-items: flex-start;
   justify-content: space-between;
   gap: 16rpx;
+}
+
+.section-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12rpx;
 }
 
 .section-action,
@@ -663,6 +644,16 @@ page {
   margin-top: 22rpx;
 }
 
+.sheet-group + .sheet-group {
+  margin-top: 18rpx;
+}
+
+.sheet-group-title {
+  margin-bottom: 12rpx;
+  font-size: 22rpx;
+  color: #8a7e72;
+}
+
 .sheet-search-input {
   margin-top: 18rpx;
   width: 100%;
@@ -693,6 +684,13 @@ page {
   color: #235346;
 }
 
+.sheet-item-main {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  min-width: 0;
+}
+
 @keyframes shimmer {
   0% {
     background-position: 200% 0;
@@ -705,6 +703,32 @@ page {
 .sheet-item-count {
   font-size: 22rpx;
   color: #908477;
+}
+
+.sheet-item-meta {
+  font-size: 22rpx;
+  color: #908477;
+}
+
+.sheet-pin {
+  flex-shrink: 0;
+  padding: 10rpx 16rpx;
+  border-radius: 999rpx;
+  background: #efe6d7;
+  color: #8a5f24;
+  font-size: 20rpx;
+}
+
+.sheet-pin.active {
+  background: rgba(47, 107, 95, 0.12);
+  color: #235346;
+}
+
+.sheet-empty {
+  padding: 28rpx 0 8rpx;
+  text-align: center;
+  font-size: 22rpx;
+  color: #8a7e72;
 }
 
 .sheet-create {

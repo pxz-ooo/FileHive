@@ -139,6 +139,23 @@ function filterProjects(projects, keyword) {
   return (projects || []).filter((item) => String(item.name || '').toLowerCase().includes(text))
 }
 
+function buildProjectSections(projects, keyword) {
+  const allProjects = projects || []
+  const filtered = filterProjects(allProjects, keyword)
+  const recentProjects = filtered.filter((item) => !item.pinned && item.last_used_at).slice(0, 5)
+  const recentIds = new Set(recentProjects.map((item) => String(item.id)))
+  const pinnedProjects = filtered.filter((item) => item.pinned)
+  const pinnedIds = new Set(pinnedProjects.map((item) => String(item.id)))
+  const remainingProjects = filtered.filter((item) => !recentIds.has(String(item.id)) && !pinnedIds.has(String(item.id)))
+
+  return {
+    pinnedProjects,
+    recentProjects,
+    allProjects: remainingProjects,
+    filteredProjects: filtered,
+  }
+}
+
 function decorateMessages(items, projects) {
   return (items || []).map((item) => {
     const message = item.message || {}
@@ -196,6 +213,9 @@ Page({
     categories: [],
     projects: [],
     filteredProjects: [],
+    pinnedProjects: [],
+    recentProjects: [],
+    allProjects: [],
     overview: null,
     topCategories: [],
     activity: [],
@@ -283,7 +303,7 @@ Page({
       }
       if (projectsResult.status === 'fulfilled') {
         nextData.projects = decorateProjects(projectsResult.value || [], this.data.projectFilter)
-        nextData.filteredProjects = filterProjects(nextData.projects, this.data.projectSearchKeyword)
+        Object.assign(nextData, buildProjectSections(nextData.projects, this.data.projectSearchKeyword))
         nextData.selectedProjectLabel = this.getSelectedProjectLabel(nextData.projects, this.data.projectFilter)
       }
       if (overviewResult.status === 'fulfilled') {
@@ -452,7 +472,7 @@ Page({
       const decoratedProjects = decorateProjects(projects, this.data.projectFilter)
       this.setData({
         projects: decoratedProjects,
-        filteredProjects: filterProjects(decoratedProjects, ''),
+        ...buildProjectSections(decoratedProjects, ''),
         projectSearchKeyword: '',
         selectedProjectLabel: this.getSelectedProjectLabel(projects, this.data.projectFilter),
         showProjectPicker: true,
@@ -476,7 +496,7 @@ Page({
     const projectSearchKeyword = e.detail.value || ''
     this.setData({
       projectSearchKeyword,
-      filteredProjects: filterProjects(this.data.projects, projectSearchKeyword),
+      ...buildProjectSections(this.data.projects, projectSearchKeyword),
     })
   },
 
@@ -489,7 +509,7 @@ Page({
     this.setData({
       projectFilter: 'all',
       projects,
-      filteredProjects: filterProjects(projects, this.data.projectSearchKeyword),
+      ...buildProjectSections(projects, this.data.projectSearchKeyword),
       selectedProjectLabel: '全部项目',
       showProjectPicker: false,
       offset: 0,
@@ -503,14 +523,31 @@ Page({
       return
     }
     const projects = decorateProjects(this.data.projects, projectId)
-    this.setData({
-      projectFilter: projectId,
-      projects,
-      filteredProjects: filterProjects(projects, this.data.projectSearchKeyword),
-      selectedProjectLabel: this.getSelectedProjectLabel(this.data.projects, projectId),
-      showProjectPicker: false,
-      offset: 0,
-    }, () => this.loadMessages(true))
+    const applySelection = () => {
+      this.setData({
+        projectFilter: projectId,
+        projects,
+        ...buildProjectSections(projects, this.data.projectSearchKeyword),
+        selectedProjectLabel: this.getSelectedProjectLabel(this.data.projects, projectId),
+        showProjectPicker: false,
+        offset: 0,
+      }, () => this.loadMessages(true))
+    }
+    api.touchProject(Number(projectId)).catch(() => {}).finally(applySelection)
+  },
+
+  toggleProjectPinned(e) {
+    const projectId = Number(e.currentTarget.dataset.projectid)
+    if (!projectId) return
+    api.toggleProjectPinned(projectId).then((result) => {
+      const projects = decorateProjects((result && result.projects) || [], this.data.projectFilter)
+      this.setData({
+        projects,
+        ...buildProjectSections(projects, this.data.projectSearchKeyword),
+      })
+    }).catch((error) => {
+      wx.showToast({ title: error.message || '操作失败', icon: 'none' })
+    })
   },
 
   openProjectDialog() {
@@ -538,7 +575,7 @@ Page({
         const decoratedProjects = decorateProjects(projects, projectFilter)
         this.setData({
           projects: decoratedProjects,
-          filteredProjects: filterProjects(decoratedProjects, this.data.projectSearchKeyword),
+          ...buildProjectSections(decoratedProjects, this.data.projectSearchKeyword),
           projectFilter,
           selectedProjectLabel: this.getSelectedProjectLabel(projects, projectFilter),
           showProjectDialog: false,

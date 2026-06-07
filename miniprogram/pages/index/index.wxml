@@ -15,7 +15,7 @@
     <view class="hero-orb hero-orb-b"></view>
     <view class="hero-kicker">WECHAT ORGANIZER</view>
     <view class="hero-title">随手存 · 自动归 · 随时找</view>
-    <view class="hero-subtitle">{{insightDescription}}</view>
+    <view class="hero-subtitle">支持文本、图片、链接（小红书、微信公众号、抖音、B站链接解析）、文件上传的归档与分析</view>
 
     <view class="home-search">
       <image class="home-search-icon" src="/images/icons/search.svg" />
@@ -30,33 +30,22 @@
       <view class="home-search-action" bindtap="submitSearch">搜索</view>
     </view>
 
-    <view class="hero-utility-grid">
-      <view class="hero-utility" bindtap="goSettings">
-        <view class="hero-utility-title">本地设置</view>
-        <view class="hero-utility-value">配置 API Key、查看导出与存储状态</view>
+    <view class="feature-grid">
+      <view class="feature-card">
+        <view class="feature-title">支持内容</view>
+        <view class="feature-value">文本 · 图片 · 链接 · 文件</view>
       </view>
-      <view class="hero-utility" bindtap="goLinkSupport">
-        <view class="hero-utility-title">链接支持</view>
-        <view class="hero-utility-value">查看目前支持解析的平台范围与公众号说明</view>
+      <view class="feature-card">
+        <view class="feature-title">链接解析</view>
+        <view class="feature-value">小红书 · 公众号 · 抖音 · B站</view>
       </view>
-    </view>
-
-    <view class="stats-grid">
-      <view class="stat-card">
-        <text class="stat-value">{{overview ? overview.today_messages : 0}}</text>
-        <text class="stat-label">今日新增</text>
+      <view class="feature-card">
+        <view class="feature-title">数据存储</view>
+        <view class="feature-value">默认本地保存，不写入云端数据库</view>
       </view>
-      <view class="stat-card">
-        <text class="stat-value">{{overview ? overview.unassigned_project_messages : 0}}</text>
-        <text class="stat-label">待归档</text>
-      </view>
-      <view class="stat-card">
-        <text class="stat-value">{{overview ? overview.pending_analysis_messages : 0}}</text>
-        <text class="stat-label">待分析</text>
-      </view>
-      <view class="stat-card">
-        <text class="stat-value">{{overview ? overview.project_count : 0}}</text>
-        <text class="stat-label">项目数</text>
+      <view class="feature-card">
+        <view class="feature-title">智能增强</view>
+        <view class="feature-value">支持摘要、分类、OCR 与图片描述</view>
       </view>
     </view>
   </view>
@@ -74,7 +63,11 @@
   <view class="panel">
     <view class="section-head">
       <view class="section-title">分类视图</view>
-      <view class="section-action" bindtap="openCategoryDialog">+ 分类</view>
+      <view class="section-actions">
+        <view class="section-action" bindtap="goLinkSupport">支持范围</view>
+        <view class="section-action" bindtap="goSettings">设置</view>
+        <view class="section-action" bindtap="openCategoryDialog">+ 分类</view>
+      </view>
     </view>
 
     <scroll-view scroll-x class="chip-scroll" show-scrollbar="{{false}}">
@@ -198,9 +191,42 @@
         <text>全部项目</text>
         <text class="sheet-item-count">当前</text>
       </view>
-      <view class="sheet-item {{item.active ? 'active' : ''}}" wx:for="{{filteredProjects}}" wx:key="id" data-projectid="{{item.id}}" bindtap="selectProjectFilter">
-        <text>{{item.name}}</text>
-        <text class="sheet-item-count">{{item.msg_count}} 条</text>
+
+      <view class="sheet-group" wx:if="{{recentProjects.length}}">
+        <view class="sheet-group-title">最近使用</view>
+        <view class="sheet-item {{item.active ? 'active' : ''}}" wx:for="{{recentProjects}}" wx:key="id" data-projectid="{{item.id}}" bindtap="selectProjectFilter">
+          <view class="sheet-item-main">
+            <text>{{item.name}}</text>
+            <text class="sheet-item-meta">{{item.msg_count}} 条</text>
+          </view>
+          <view class="sheet-pin {{item.pinned ? 'active' : ''}}" catchtap="toggleProjectPinned" data-projectid="{{item.id}}">置顶</view>
+        </view>
+      </view>
+
+      <view class="sheet-group" wx:if="{{pinnedProjects.length}}">
+        <view class="sheet-group-title">置顶项目</view>
+        <view class="sheet-item {{item.active ? 'active' : ''}}" wx:for="{{pinnedProjects}}" wx:key="id" data-projectid="{{item.id}}" bindtap="selectProjectFilter">
+          <view class="sheet-item-main">
+            <text>{{item.name}}</text>
+            <text class="sheet-item-meta">{{item.msg_count}} 条</text>
+          </view>
+          <view class="sheet-pin active" catchtap="toggleProjectPinned" data-projectid="{{item.id}}">取消置顶</view>
+        </view>
+      </view>
+
+      <view class="sheet-group" wx:if="{{allProjects.length}}">
+        <view class="sheet-group-title">{{projectSearchKeyword ? '搜索结果' : '全部项目'}}</view>
+        <view class="sheet-item {{item.active ? 'active' : ''}}" wx:for="{{allProjects}}" wx:key="id" data-projectid="{{item.id}}" bindtap="selectProjectFilter">
+          <view class="sheet-item-main">
+            <text>{{item.name}}</text>
+            <text class="sheet-item-meta">{{item.msg_count}} 条</text>
+          </view>
+          <view class="sheet-pin {{item.pinned ? 'active' : ''}}" catchtap="toggleProjectPinned" data-projectid="{{item.id}}">{{item.pinned ? '取消置顶' : '置顶'}}</view>
+        </view>
+      </view>
+
+      <view class="sheet-empty" wx:if="{{!recentProjects.length && !pinnedProjects.length && !allProjects.length}}">
+        暂无匹配项目
       </view>
     </view>
 

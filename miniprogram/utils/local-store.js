@@ -200,6 +200,23 @@ function decorateProjects(projects, entries) {
   }))
 }
 
+function sortProjectsByPriority(projects) {
+  return (projects || []).slice().sort((a, b) => {
+    const pinnedDiff = Number(Boolean(b.pinned)) - Number(Boolean(a.pinned))
+    if (pinnedDiff !== 0) return pinnedDiff
+
+    const lastUsedA = String(a.last_used_at || '')
+    const lastUsedB = String(b.last_used_at || '')
+    if (lastUsedA !== lastUsedB) return lastUsedB.localeCompare(lastUsedA)
+
+    const createdA = String(a.created_at || '')
+    const createdB = String(b.created_at || '')
+    if (createdA !== createdB) return createdB.localeCompare(createdA)
+
+    return String(a.name || '').localeCompare(String(b.name || ''), 'zh')
+  })
+}
+
 function readTextSnippet(filePath, extension) {
   const readableExtensions = ['txt', 'md', 'csv', 'json', 'js', 'ts', 'py', 'html', 'xml']
   if (!readableExtensions.includes(extension)) {
@@ -435,7 +452,7 @@ async function deleteEntry(msgid) {
 
 async function listProjects() {
   const store = await readStore()
-  return decorateProjects(store.projects, store.entries)
+  return sortProjectsByPriority(decorateProjects(store.projects, store.entries))
 }
 
 async function createProject(name) {
@@ -443,16 +460,18 @@ async function createProject(name) {
   if (!projectName) throw new Error('项目名不能为空')
   const store = await readStore()
   if (store.projects.find((item) => item.name === projectName)) {
-    return { projects: decorateProjects(store.projects, store.entries) }
+    return { projects: sortProjectsByPriority(decorateProjects(store.projects, store.entries)) }
   }
   const nextProjects = store.projects.concat([{
     id: nextProjectId(store.projects),
     name: projectName,
     color: pickProjectColor(store.projects),
     created_at: nowIsoString(),
+    last_used_at: '',
+    pinned: false,
   }])
   await writeProjects(nextProjects)
-  return { projects: decorateProjects(nextProjects, store.entries) }
+  return { projects: sortProjectsByPriority(decorateProjects(nextProjects, store.entries)) }
 }
 
 async function setProject(msgid, projectId) {
@@ -467,6 +486,37 @@ async function setProject(msgid, projectId) {
 async function removeProject(msgid) {
   await updateEntry(msgid, (entry) => ({ ...entry, project_id: null }))
   return { ok: true }
+}
+
+async function touchProject(projectId) {
+  const store = await readStore()
+  if (!store.projects.find((item) => String(item.id) === String(projectId))) {
+    throw new Error('project not found')
+  }
+  const nextProjects = store.projects.map((item) => (
+    String(item.id) === String(projectId)
+      ? { ...item, last_used_at: nowIsoString() }
+      : item
+  ))
+  await writeProjects(nextProjects)
+  return { ok: true }
+}
+
+async function toggleProjectPinned(projectId) {
+  const store = await readStore()
+  let found = false
+  const nextProjects = store.projects.map((item) => {
+    if (String(item.id) !== String(projectId)) return item
+    found = true
+    return {
+      ...item,
+      pinned: !item.pinned,
+      last_used_at: item.last_used_at || nowIsoString(),
+    }
+  })
+  if (!found) throw new Error('project not found')
+  await writeProjects(nextProjects)
+  return { ok: true, projects: sortProjectsByPriority(decorateProjects(nextProjects, store.entries)) }
 }
 
 async function listCategories() {
@@ -659,6 +709,8 @@ module.exports = {
   createProject,
   setProject,
   removeProject,
+  touchProject,
+  toggleProjectPinned,
   listCategories,
   createCategory,
   updateSummary,

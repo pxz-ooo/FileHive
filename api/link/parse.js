@@ -8,6 +8,8 @@ const BUGPK_APIS = {
   bilibili: 'https://api.bugpk.com/api/bilibili',
 }
 
+const WECHAT_IN_APP_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 MicroMessenger/8.0.34(0x16082222) NetType/WIFI Language/zh_CN'
+
 function extractFirstUrl(input) {
   const match = String(input || '').match(/(https?:\/\/[^\s]+)|((?:www\.|xhslink\.com|b23\.tv|v\.douyin\.com|mp\.weixin\.qq\.com)[^\s]*)/i)
   if (!match) return ''
@@ -81,6 +83,16 @@ function decodeHtml(value) {
     .replace(/&gt;/g, '>'))
 }
 
+function stripHtml(value) {
+  return sanitizeText(String(value || '')
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\n{3,}/g, '\n\n'))
+}
+
 function extractMeta(html, names) {
   const patterns = []
   names.forEach((name) => {
@@ -108,6 +120,20 @@ function extractJsValue(html, key) {
     if (match && match[1]) return decodeHtml(match[1])
   }
   return ''
+}
+
+function extractBetween(html, startToken, endToken) {
+  const startIndex = String(html || '').indexOf(startToken)
+  if (startIndex < 0) return ''
+  const from = startIndex + startToken.length
+  const endIndex = String(html || '').indexOf(endToken, from)
+  if (endIndex < 0) return ''
+  return html.slice(from, endIndex)
+}
+
+function extractWechatContentHtml(html) {
+  const match = String(html || '').match(/<div[^>]+id=["']js_content["'][^>]*>([\s\S]*?)<\/div>/i)
+  return match && match[1] ? match[1] : ''
 }
 
 async function fetchJsonFromBugpk(endpoint, url) {
@@ -139,7 +165,8 @@ async function parseWechatArticle(sourceUrl) {
     method: 'GET',
     headers: {
       Accept: 'text/html,application/xhtml+xml',
-      'User-Agent': 'Mozilla/5.0 (compatible; FileHive-Link-Parser/1.0)',
+      'User-Agent': WECHAT_IN_APP_UA,
+      Referer: 'https://mp.weixin.qq.com/',
     },
   })
 
@@ -153,27 +180,33 @@ async function parseWechatArticle(sourceUrl) {
   const cover = extractMeta(html, ['og:image']) || extractJsValue(html, 'msg_cdn_url')
   const nickname = extractJsValue(html, 'nickname') || extractJsValue(html, 'user_name')
   const publishTime = extractJsValue(html, 'publish_time') || extractJsValue(html, 'oriCreateTime')
+  const contentHtml = extractWechatContentHtml(html)
+  const contentText = stripHtml(contentHtml)
+  const digest = extractBetween(html, 'var msg_desc = "', '";') || desc
 
   return {
     ok: true,
-    parser: 'wechat_article_meta',
+    parser: 'wechat_article_wechat_ua',
     sourceUrl,
-    message: '微信公众号文章已通过网页元信息解析',
+    message: '微信公众号文章已通过微信 UA 抓取并提取正文',
     platform: '微信公众号',
     type: '文章',
     title,
-    desc,
+    desc: digest,
     author: toAuthor(nickname),
     cover,
     mediaUrl: '',
     images: cover ? [cover] : [],
     music: null,
     publishedAt: publishTime,
+    contentHtml,
+    contentText,
     raw: {
       title,
-      desc,
+      desc: digest,
       nickname,
       publishTime,
+      contentText: contentText.slice(0, 4000),
     },
   }
 }

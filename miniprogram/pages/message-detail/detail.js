@@ -110,6 +110,8 @@ function buildPlatformInfo(message) {
     mediaUrl: link.media_url || '',
     parser: link.parser || '',
     parserMessage: link.parser_message || '',
+    publishedAt: link.published_at || '',
+    contentText: link.content_text || '',
   }
 }
 

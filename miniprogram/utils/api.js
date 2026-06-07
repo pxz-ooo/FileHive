@@ -202,6 +202,7 @@ function buildLinkAnalysisPayload(rawText, parseResult) {
     if (parseResult.platform) lines.push(`平台: ${sanitizeText(parseResult.platform)}`)
     if (parseResult.title) lines.push(`标题: ${sanitizeText(parseResult.title)}`)
     if (parseResult.desc) lines.push(`摘要: ${sanitizeText(parseResult.desc)}`)
+    if (parseResult.contentText) lines.push(`正文提取: ${sanitizeText(parseResult.contentText).slice(0, 2500)}`)
     if (parseResult.author && parseResult.author.name) lines.push(`作者: ${sanitizeText(parseResult.author.name)}`)
     if (parseResult.type) lines.push(`内容类型: ${sanitizeText(parseResult.type)}`)
     if (parseResult.publishedAt) lines.push(`发布时间: ${sanitizeText(parseResult.publishedAt)}`)
@@ -228,6 +229,8 @@ function buildLinkRawContent(rawText, parseResult) {
       cover: sanitizeText(normalized.cover || ''),
       author: sanitizeText(normalized.author && normalized.author.name),
       published_at: sanitizeText(normalized.publishedAt || ''),
+      content_text: sanitizeText(normalized.contentText || ''),
+      content_html: String(normalized.contentHtml || '').trim(),
       images: Array.isArray(normalized.images) ? normalized.images.filter(Boolean) : [],
       music: normalized.music || null,
     },
@@ -595,6 +598,8 @@ module.exports = {
   createCategory: (name) => store.createCategory(name),
   fetchProjects: () => store.listProjects(),
   createProject: (name) => store.createProject(name),
+  touchProject: (projectId) => store.touchProject(projectId),
+  toggleProjectPinned: (projectId) => store.toggleProjectPinned(projectId),
   exportIndexFile: () => store.exportIndexFile(),
   exportBundleManifest: () => store.exportBundleManifest(),
   shareOrOpenFile,
