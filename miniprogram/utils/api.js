@@ -204,6 +204,7 @@ function buildLinkAnalysisPayload(rawText, parseResult) {
     if (parseResult.desc) lines.push(`摘要: ${sanitizeText(parseResult.desc)}`)
     if (parseResult.author && parseResult.author.name) lines.push(`作者: ${sanitizeText(parseResult.author.name)}`)
     if (parseResult.type) lines.push(`内容类型: ${sanitizeText(parseResult.type)}`)
+    if (parseResult.publishedAt) lines.push(`发布时间: ${sanitizeText(parseResult.publishedAt)}`)
     if (parseResult.sourceUrl) lines.push(`原始链接: ${sanitizeText(parseResult.sourceUrl)}`)
     if (parseResult.mediaUrl) lines.push(`提取媒体地址: ${sanitizeText(parseResult.mediaUrl)}`)
   }
@@ -226,6 +227,7 @@ function buildLinkRawContent(rawText, parseResult) {
       media_url: sanitizeText(normalized.mediaUrl || ''),
       cover: sanitizeText(normalized.cover || ''),
       author: sanitizeText(normalized.author && normalized.author.name),
+      published_at: sanitizeText(normalized.publishedAt || ''),
       images: Array.isArray(normalized.images) ? normalized.images.filter(Boolean) : [],
       music: normalized.music || null,
     },

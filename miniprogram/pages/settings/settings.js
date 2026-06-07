@@ -226,6 +226,10 @@ Page({
       .finally(() => this.setData({ exportingManifest: false }))
   },
 
+  goLinkSupport() {
+    wx.navigateTo({ url: '/pages/link-support/index' })
+  },
+
   goBack() {
     const pages = getCurrentPages()
     if (pages.length > 1) {

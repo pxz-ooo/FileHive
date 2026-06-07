@@ -1,6 +1,12 @@
 const { readJsonBody, sendJson, setCors } = require('../_lib/http')
 
-const BUGPK_SHORT_VIDEOS_API = 'https://api.bugpk.com/api/short_videos'
+const BUGPK_APIS = {
+  shortVideos: 'https://api.bugpk.com/api/short_videos',
+  xiaohongshu: 'https://api.bugpk.com/api/xhs',
+  xiaohongshuImages: 'https://api.bugpk.com/api/xhsimg',
+  douyin: 'https://api.bugpk.com/api/douyin',
+  bilibili: 'https://api.bugpk.com/api/bilibili',
+}
 
 function extractFirstUrl(input) {
   const match = String(input || '').match(/(https?:\/\/[^\s]+)|((?:www\.|xhslink\.com|b23\.tv|v\.douyin\.com|mp\.weixin\.qq\.com)[^\s]*)/i)
@@ -9,32 +15,106 @@ function extractFirstUrl(input) {
   return /^https?:\/\//i.test(candidate) ? candidate : `https://${candidate.replace(/^\/+/, '')}`
 }
 
-function normalizeBugpkPayload(sourceUrl, payload) {
+function detectPlatform(url) {
+  const text = String(url || '').toLowerCase()
+  if (/(xiaohongshu\.com|xhslink\.com)/.test(text)) return 'xiaohongshu'
+  if (/(douyin\.com|v\.douyin\.com)/.test(text)) return 'douyin'
+  if (/(bilibili\.com|b23\.tv)/.test(text)) return 'bilibili'
+  if (/mp\.weixin\.qq\.com/.test(text)) return 'wechat_article'
+  return 'generic'
+}
+
+function sanitizeText(value) {
+  if (value == null) return ''
+  if (typeof value === 'string') return value.replace(/\s+/g, ' ').trim()
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value)
+  return ''
+}
+
+function toAuthor(author, extra = {}) {
+  if (typeof author === 'string') {
+    return { name: author, ...extra }
+  }
+  if (author && typeof author === 'object') {
+    return {
+      name: sanitizeText(author.name || author.nickname || author.author || ''),
+      avatar: sanitizeText(author.avatar || author.avatarUrl || ''),
+      ...extra,
+    }
+  }
+  return {
+    name: '',
+    ...extra,
+  }
+}
+
+function normalizeBugpkPayload(sourceUrl, payload, options = {}) {
   const body = payload || {}
   const data = body.data || {}
   return {
-    ok: body.code === 200,
-    parser: 'bugpk_short_videos',
+    ok: body.code === 200 || body.success === true,
+    parser: options.parser || 'bugpk_short_videos',
     sourceUrl,
-    message: body.msg || '',
-    platform: data.platform || '',
-    type: data.type || '',
-    title: data.title || data.desc || '',
-    desc: data.desc || data.title || '',
-    author: typeof data.author === 'string' ? { name: data.author } : (data.author || {}),
-    cover: data.cover || '',
-    mediaUrl: data.url || '',
-    images: Array.isArray(data.images) ? data.images : [],
+    message: body.msg || body.message || '',
+    platform: options.platform || data.platform || '',
+    type: options.type || data.type || '',
+    title: sanitizeText(data.title || data.desc || body.title || ''),
+    desc: sanitizeText(data.desc || data.title || body.desc || ''),
+    author: toAuthor(data.author, {
+      userId: sanitizeText(data.userId || data.author_id || ''),
+    }),
+    cover: sanitizeText(data.cover || data.pic || ''),
+    mediaUrl: sanitizeText(data.url || data.video || ''),
+    images: Array.isArray(data.images) ? data.images.filter(Boolean) : [],
     music: data.music || null,
+    publishedAt: sanitizeText(data.time || data.publish_time || ''),
     raw: body,
   }
 }
 
-async function callBugpk(url) {
-  const upstream = await fetch(`${BUGPK_SHORT_VIDEOS_API}?url=${encodeURIComponent(url)}`, {
+function decodeHtml(value) {
+  return sanitizeText(String(value || '')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>'))
+}
+
+function extractMeta(html, names) {
+  const patterns = []
+  names.forEach((name) => {
+    patterns.push(new RegExp(`<meta[^>]+property=["']${name}["'][^>]+content=["']([^"']+)["'][^>]*>`, 'i'))
+    patterns.push(new RegExp(`<meta[^>]+name=["']${name}["'][^>]+content=["']([^"']+)["'][^>]*>`, 'i'))
+    patterns.push(new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+property=["']${name}["'][^>]*>`, 'i'))
+    patterns.push(new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+name=["']${name}["'][^>]*>`, 'i'))
+  })
+  for (const pattern of patterns) {
+    const match = html.match(pattern)
+    if (match && match[1]) return decodeHtml(match[1])
+  }
+  return ''
+}
+
+function extractJsValue(html, key) {
+  const patterns = [
+    new RegExp(`var\\s+${key}\\s*=\\s*"([^"]*)"`, 'i'),
+    new RegExp(`var\\s+${key}\\s*=\\s*'([^']*)'`, 'i'),
+    new RegExp(`window\\.${key}\\s*=\\s*"([^"]*)"`, 'i'),
+    new RegExp(`window\\.${key}\\s*=\\s*'([^']*)'`, 'i'),
+  ]
+  for (const pattern of patterns) {
+    const match = html.match(pattern)
+    if (match && match[1]) return decodeHtml(match[1])
+  }
+  return ''
+}
+
+async function fetchJsonFromBugpk(endpoint, url) {
+  const upstream = await fetch(`${endpoint}?url=${encodeURIComponent(url)}`, {
     method: 'GET',
     headers: {
-      'Accept': 'application/json',
+      Accept: 'application/json',
       'User-Agent': 'FileHive-Link-Parser/1.0',
     },
   })
@@ -44,14 +124,107 @@ async function callBugpk(url) {
   try {
     data = text ? JSON.parse(text) : {}
   } catch (error) {
-    throw new Error('BugPk 返回了非 JSON 内容')
+    throw new Error('BugPk returned non-JSON content')
   }
 
   if (!upstream.ok) {
-    throw new Error((data && data.msg) || `BugPk 请求失败 (${upstream.status})`)
+    throw new Error((data && (data.msg || data.message)) || `BugPk request failed (${upstream.status})`)
   }
 
   return data
+}
+
+async function parseWechatArticle(sourceUrl) {
+  const upstream = await fetch(sourceUrl, {
+    method: 'GET',
+    headers: {
+      Accept: 'text/html,application/xhtml+xml',
+      'User-Agent': 'Mozilla/5.0 (compatible; FileHive-Link-Parser/1.0)',
+    },
+  })
+
+  const html = await upstream.text()
+  if (!upstream.ok) {
+    throw new Error(`WeChat article request failed (${upstream.status})`)
+  }
+
+  const title = extractMeta(html, ['og:title']) || extractJsValue(html, 'msg_title')
+  const desc = extractMeta(html, ['description', 'og:description']) || extractJsValue(html, 'msg_desc')
+  const cover = extractMeta(html, ['og:image']) || extractJsValue(html, 'msg_cdn_url')
+  const nickname = extractJsValue(html, 'nickname') || extractJsValue(html, 'user_name')
+  const publishTime = extractJsValue(html, 'publish_time') || extractJsValue(html, 'oriCreateTime')
+
+  return {
+    ok: true,
+    parser: 'wechat_article_meta',
+    sourceUrl,
+    message: '微信公众号文章已通过网页元信息解析',
+    platform: '微信公众号',
+    type: '文章',
+    title,
+    desc,
+    author: toAuthor(nickname),
+    cover,
+    mediaUrl: '',
+    images: cover ? [cover] : [],
+    music: null,
+    publishedAt: publishTime,
+    raw: {
+      title,
+      desc,
+      nickname,
+      publishTime,
+    },
+  }
+}
+
+async function parseXiaohongshu(sourceUrl) {
+  try {
+    const payload = await fetchJsonFromBugpk(BUGPK_APIS.xiaohongshu, sourceUrl)
+    return normalizeBugpkPayload(sourceUrl, payload, {
+      parser: 'bugpk_xhs',
+      platform: '小红书',
+    })
+  } catch (error) {
+    const payload = await fetchJsonFromBugpk(BUGPK_APIS.xiaohongshuImages, sourceUrl)
+    return normalizeBugpkPayload(sourceUrl, payload, {
+      parser: 'bugpk_xhsimg',
+      platform: '小红书',
+      type: '图文',
+    })
+  }
+}
+
+async function parseDouyin(sourceUrl) {
+  const payload = await fetchJsonFromBugpk(BUGPK_APIS.douyin, sourceUrl)
+  return normalizeBugpkPayload(sourceUrl, payload, {
+    parser: 'bugpk_douyin',
+    platform: '抖音',
+  })
+}
+
+async function parseBilibili(sourceUrl) {
+  const payload = await fetchJsonFromBugpk(BUGPK_APIS.bilibili, sourceUrl)
+  return normalizeBugpkPayload(sourceUrl, payload, {
+    parser: 'bugpk_bilibili',
+    platform: 'B站',
+  })
+}
+
+async function parseGeneric(sourceUrl) {
+  const payload = await fetchJsonFromBugpk(BUGPK_APIS.shortVideos, sourceUrl)
+  return normalizeBugpkPayload(sourceUrl, payload, {
+    parser: 'bugpk_short_videos',
+  })
+}
+
+async function resolveByPlatform(sourceUrl) {
+  const platform = detectPlatform(sourceUrl)
+  if (platform === 'xiaohongshu') return parseXiaohongshu(sourceUrl)
+  if (platform === 'douyin') return parseDouyin(sourceUrl)
+  if (platform === 'bilibili') return parseBilibili(sourceUrl)
+  if (platform === 'wechat_article') return parseWechatArticle(sourceUrl)
+  return parseGeneric(sourceUrl)
 }
 
 module.exports = async (req, res) => {
@@ -78,19 +251,19 @@ module.exports = async (req, res) => {
   const sourceText = body.url || body.text || ''
   const sourceUrl = extractFirstUrl(sourceText)
   if (!sourceUrl) {
-    sendJson(res, 400, { ok: false, message: '未提取到可解析的链接' })
+    sendJson(res, 400, { ok: false, message: 'No resolvable URL found in the input' })
     return
   }
 
   try {
-    const payload = await callBugpk(sourceUrl)
-    sendJson(res, 200, normalizeBugpkPayload(sourceUrl, payload))
+    const payload = await resolveByPlatform(sourceUrl)
+    sendJson(res, 200, payload)
   } catch (error) {
     sendJson(res, 200, {
       ok: false,
-      parser: 'bugpk_short_videos',
+      parser: detectPlatform(sourceUrl),
       sourceUrl,
-      message: error.message || '解析失败',
+      message: error.message || 'Parse failed',
     })
   }
 }

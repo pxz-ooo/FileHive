@@ -576,6 +576,10 @@ Page({
     wx.navigateTo({ url: '/pages/settings/settings' })
   },
 
+  goLinkSupport() {
+    wx.navigateTo({ url: '/pages/link-support/index' })
+  },
+
   onInput(e) {
     const nextValue = e && e.detail && Object.prototype.hasOwnProperty.call(e.detail, 'value')
       ? e.detail.value

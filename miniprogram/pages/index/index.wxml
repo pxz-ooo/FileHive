@@ -30,9 +30,15 @@
       <view class="home-search-action" bindtap="submitSearch">搜索</view>
     </view>
 
-    <view class="hero-utility" bindtap="goSettings">
-      <view class="hero-utility-title">本地设置</view>
-      <view class="hero-utility-value">配置 API Key、查看导出与存储状态</view>
+    <view class="hero-utility-grid">
+      <view class="hero-utility" bindtap="goSettings">
+        <view class="hero-utility-title">本地设置</view>
+        <view class="hero-utility-value">配置 API Key、查看导出与存储状态</view>
+      </view>
+      <view class="hero-utility" bindtap="goLinkSupport">
+        <view class="hero-utility-title">链接支持</view>
+        <view class="hero-utility-value">查看目前支持解析的平台范围与公众号说明</view>
+      </view>
     </view>
 
     <view class="stats-grid">

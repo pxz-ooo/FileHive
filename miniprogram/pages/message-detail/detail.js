@@ -94,7 +94,7 @@ function buildPlatformInfo(message) {
   const originalUrl = link.url || ''
   const rawText = link.raw_text || ''
   const source = [originalUrl, link.title, link.desc, rawText].join(' ')
-  const name = detectPlatform(source)
+  const name = link.platform || detectPlatform(source)
   const contentId = extractContentId(originalUrl, name)
   return {
     show: true,

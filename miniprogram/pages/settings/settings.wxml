@@ -18,6 +18,7 @@
     <view class="panel-title">AI 通道</view>
     <view class="inline-actions inline-actions-top">
       <view class="minor-action" bindtap="showApiKeyGuide">查看说明</view>
+      <view class="minor-action" bindtap="goLinkSupport">支持链接范围</view>
     </view>
 
     <view class="provider-list">

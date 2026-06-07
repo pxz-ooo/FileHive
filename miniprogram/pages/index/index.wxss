@@ -131,8 +131,14 @@ page {
   font-size: 22rpx;
 }
 
-.hero-utility {
+.hero-utility-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14rpx;
   margin-top: 18rpx;
+}
+
+.hero-utility {
   padding: 20rpx 22rpx;
   border-radius: 24rpx;
   background: rgba(248, 242, 233, 0.12);

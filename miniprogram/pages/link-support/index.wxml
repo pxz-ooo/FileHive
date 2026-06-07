@@ -1,0 +1,45 @@
+<t-navbar title="链接支持范围" background="#f6f1e8" color="#16302b" fixed="{{true}}" left-arrow="{{false}}">
+  <view slot="left" class="nav-back" bindtap="goBack">
+    <image class="nav-back-icon" src="/images/icons/chevron-left.svg" />
+    <text class="nav-back-text">返回</text>
+  </view>
+</t-navbar>
+
+<view class="page-shell">
+  <view class="hero-card">
+    <view class="hero-title">当前支持的链接解析范围</view>
+    <view class="hero-subtitle">支持直接粘贴纯链接，也支持“小红书/抖音/B站/公众号”的分享文案。解析结果会和摘要一起保存在本地。</view>
+  </view>
+
+  <view class="panel">
+    <view class="panel-title">支持平台</view>
+    <view class="platform-list">
+      <view class="platform-card" wx:for="{{platforms}}" wx:key="name">
+        <view class="platform-head">
+          <view class="platform-name">{{item.name}}</view>
+          <view class="platform-parser">{{item.parser}}</view>
+        </view>
+        <view class="platform-row">
+          <text class="platform-label">输入形式</text>
+          <text class="platform-value">{{item.input}}</text>
+        </view>
+        <view class="platform-row">
+          <text class="platform-label">提取结果</text>
+          <text class="platform-value">{{item.output}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="panel">
+    <view class="panel-title">公众号文章说明</view>
+    <view class="note-text">公众号文章目前不依赖 BugPk，而是由轻服务直接抓取网页 HTML，再提取 title、description、封面、公众号名和发布时间。</view>
+    <view class="note-text">这条路更适合做文章标题和摘要归档，但不保证能稳定拿到完整正文。后续如果你需要全文提取，可以再接阅读器服务或浏览器渲染方案。</view>
+  </view>
+
+  <view class="panel">
+    <view class="panel-title">当前边界</view>
+    <view class="note-text">如果上游接口临时失败，系统会尽量保留平台、原始链接和分享文案，不会让这条内容直接丢失。</view>
+    <view class="note-text">所有解析后的标题、摘要、作者、媒体地址都只保存在当前设备本地，不会写入我们的云端数据库。</view>
+  </view>
+</view>

@@ -4,6 +4,7 @@
     "pages/message-detail/detail",
     "pages/search/search",
     "pages/settings/settings",
+    "pages/link-support/index",
     "pages/webview/webview"
   ],
   "window": {
